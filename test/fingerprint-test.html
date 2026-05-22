@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhantomPrint - Fingerprint Test</title>
+  <link rel="stylesheet" href="fingerprint-test.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>&#128123; PhantomPrint Fingerprint Test</h1>
+      <p>This page shows your current fingerprint values. Spoofed values are highlighted.</p>
+      <button id="refreshBtn" class="btn">&#x21BB; Refresh All</button>
+    </header>
+
+    <div class="grid">
+      <!-- Navigator -->
+      <section class="card">
+        <h2>&#127760; Navigator & Browser</h2>
+        <table id="navigatorTable"></table>
+      </section>
+
+      <!-- Screen -->
+      <section class="card">
+        <h2>&#128187; Screen & Display</h2>
+        <table id="screenTable"></table>
+      </section>
+
+      <!-- Hardware -->
+      <section class="card">
+        <h2>&#9881; Hardware</h2>
+        <table id="hardwareTable"></table>
+      </section>
+
+      <!-- WebGL -->
+      <section class="card">
+        <h2>&#127918; WebGL</h2>
+        <table id="webglTable"></table>
+      </section>
+
+      <!-- Canvas -->
+      <section class="card">
+        <h2>&#127912; Canvas</h2>
+        <div id="canvasTest">
+          <canvas id="testCanvas" width="280" height="60"></canvas>
+          <div class="hash-display">Hash: <code id="canvasHash">--</code></div>
+        </div>
+      </section>
+
+      <!-- Audio -->
+      <section class="card">
+        <h2>&#127925; Audio</h2>
+        <table id="audioTable"></table>
+        <div class="hash-display">Audio Hash: <code id="audioHash">--</code></div>
+      </section>
+
+      <!-- Timezone & Location -->
+      <section class="card">
+        <h2>&#128205; Timezone & Location</h2>
+        <table id="timezoneTable"></table>
+      </section>
+
+      <!-- Media & Codecs -->
+      <section class="card">
+        <h2>&#127909; Media</h2>
+        <table id="mediaTable"></table>
+      </section>
+
+      <!-- Fonts -->
+      <section class="card">
+        <h2>&#128221; Fonts</h2>
+        <div id="fontResults" class="font-results"></div>
+      </section>
+
+      <!-- WebRTC -->
+      <section class="card">
+        <h2>&#128222; WebRTC</h2>
+        <table id="webrtcTable"></table>
+      </section>
+
+      <!-- Timing -->
+      <section class="card">
+        <h2>&#9201; Timing</h2>
+        <table id="timingTable"></table>
+      </section>
+
+      <!-- Storage -->
+      <section class="card">
+        <h2>&#128451; Storage & Privacy</h2>
+        <table id="storageTable"></table>
+      </section>
+    </div>
+
+    <footer>
+      <p>PhantomPrint v1.0.0 | All values should be consistent and realistic</p>
+    </footer>
+  </div>
+  <script src="fingerprint-test.js"></script>
+</body>
+</html>

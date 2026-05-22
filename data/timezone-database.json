@@ -1,0 +1,88 @@
+{
+  "en-US": [
+    {"tz":"America/New_York","offset":-300,"label":"Eastern Time"},
+    {"tz":"America/Chicago","offset":-360,"label":"Central Time"},
+    {"tz":"America/Denver","offset":-420,"label":"Mountain Time"},
+    {"tz":"America/Los_Angeles","offset":-480,"label":"Pacific Time"},
+    {"tz":"America/Anchorage","offset":-540,"label":"Alaska Time"},
+    {"tz":"Pacific/Honolulu","offset":-600,"label":"Hawaii Time"}
+  ],
+  "en-GB": [
+    {"tz":"Europe/London","offset":0,"label":"GMT"},
+    {"tz":"Europe/London","offset":60,"label":"BST"}
+  ],
+  "en-AU": [
+    {"tz":"Australia/Sydney","offset":660,"label":"AEDT"},
+    {"tz":"Australia/Melbourne","offset":660,"label":"AEDT"},
+    {"tz":"Australia/Perth","offset":480,"label":"AWST"}
+  ],
+  "en-CA": [
+    {"tz":"America/Toronto","offset":-300,"label":"Eastern"},
+    {"tz":"America/Vancouver","offset":-480,"label":"Pacific"}
+  ],
+  "fr-FR": [
+    {"tz":"Europe/Paris","offset":60,"label":"CET"},
+    {"tz":"Europe/Paris","offset":120,"label":"CEST"}
+  ],
+  "de-DE": [
+    {"tz":"Europe/Berlin","offset":60,"label":"CET"},
+    {"tz":"Europe/Berlin","offset":120,"label":"CEST"}
+  ],
+  "es-ES": [
+    {"tz":"Europe/Madrid","offset":60,"label":"CET"},
+    {"tz":"Europe/Madrid","offset":120,"label":"CEST"}
+  ],
+  "it-IT": [
+    {"tz":"Europe/Rome","offset":60,"label":"CET"},
+    {"tz":"Europe/Rome","offset":120,"label":"CEST"}
+  ],
+  "pt-BR": [
+    {"tz":"America/Sao_Paulo","offset":-180,"label":"BRT"}
+  ],
+  "ja-JP": [
+    {"tz":"Asia/Tokyo","offset":540,"label":"JST"}
+  ],
+  "ko-KR": [
+    {"tz":"Asia/Seoul","offset":540,"label":"KST"}
+  ],
+  "zh-CN": [
+    {"tz":"Asia/Shanghai","offset":480,"label":"CST"}
+  ],
+  "zh-TW": [
+    {"tz":"Asia/Taipei","offset":480,"label":"CST"}
+  ],
+  "ru-RU": [
+    {"tz":"Europe/Moscow","offset":180,"label":"MSK"},
+    {"tz":"Asia/Yekaterinburg","offset":300,"label":"YEKT"}
+  ],
+  "nl-NL": [
+    {"tz":"Europe/Amsterdam","offset":60,"label":"CET"},
+    {"tz":"Europe/Amsterdam","offset":120,"label":"CEST"}
+  ],
+  "pl-PL": [
+    {"tz":"Europe/Warsaw","offset":60,"label":"CET"},
+    {"tz":"Europe/Warsaw","offset":120,"label":"CEST"}
+  ],
+  "sv-SE": [
+    {"tz":"Europe/Stockholm","offset":60,"label":"CET"},
+    {"tz":"Europe/Stockholm","offset":120,"label":"CEST"}
+  ],
+  "tr-TR": [
+    {"tz":"Europe/Istanbul","offset":180,"label":"TRT"}
+  ],
+  "ar-SA": [
+    {"tz":"Asia/Riyadh","offset":180,"label":"AST"}
+  ],
+  "hi-IN": [
+    {"tz":"Asia/Kolkata","offset":330,"label":"IST"}
+  ],
+  "th-TH": [
+    {"tz":"Asia/Bangkok","offset":420,"label":"ICT"}
+  ],
+  "vi-VN": [
+    {"tz":"Asia/Ho_Chi_Minh","offset":420,"label":"ICT"}
+  ],
+  "id-ID": [
+    {"tz":"Asia/Jakarta","offset":420,"label":"WIB"}
+  ]
+}

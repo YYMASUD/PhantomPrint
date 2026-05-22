@@ -1,0 +1,8 @@
+{
+  "common": ["Arial","Helvetica","Times New Roman","Courier New","Georgia","Verdana","Trebuchet MS","Impact","Comic Sans MS","Palatino Linotype","Lucida Console","Tahoma","Geneva","Lucida Sans Unicode"],
+  "windows": ["Segoe UI","Calibri","Consolas","Cambria","Candara","Corbel","Constantia","Segoe Print","Segoe Script","Malgun Gothic","Microsoft YaHei","Microsoft JhengHei","Yu Gothic","Meiryo","SimSun","SimHei","MS Gothic","MS PGothic","MS Mincho","Gabriola","Ebrima","Javanese Text","Leelawadee UI","Myanmar Text","Nirmala UI","Sitka Text","Sylfaen","Gadugi"],
+  "macOS": ["Helvetica Neue","San Francisco","SF Pro Display","SF Pro Text","Menlo","Monaco","Avenir","Avenir Next","Futura","Optima","Baskerville","Didot","Gill Sans","Hoefler Text","American Typewriter","Apple Chancery","Chalkboard","Chalkboard SE","Cochin","Copperplate","Marker Felt","Noteworthy","Papyrus","Phosphate","SignPainter","Snell Roundhand","Apple Symbols","Apple Color Emoji","Hiragino Sans","Hiragino Mincho ProN","PingFang SC"],
+  "linux": ["Liberation Sans","Liberation Serif","Liberation Mono","DejaVu Sans","DejaVu Serif","DejaVu Sans Mono","Noto Sans","Noto Serif","Noto Mono","Ubuntu","Ubuntu Mono","Cantarell","Droid Sans","Droid Serif","FreeSans","FreeSerif","FreeMono","Nimbus Sans","Nimbus Roman","Nimbus Mono","Bitstream Vera Sans","Bitstream Vera Serif"],
+  "android": ["Roboto","Noto Sans","Droid Sans","Droid Serif","Droid Sans Mono","Cutive Mono","Coming Soon","Dancing Script"],
+  "ios": ["San Francisco","SF Pro Display","SF Pro Text","SF Mono","New York","Helvetica Neue","Avenir","Avenir Next","Futura","Gill Sans","Menlo","Apple Color Emoji","PingFang SC","Hiragino Sans"]
+}

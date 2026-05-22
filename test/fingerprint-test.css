@@ -1,0 +1,27 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #e8e8e8; min-height: 100vh; padding: 30px; }
+.container { max-width: 1200px; margin: 0 auto; }
+header { text-align: center; margin-bottom: 30px; }
+header h1 { font-size: 28px; margin-bottom: 8px; background: linear-gradient(135deg, #7c3aed, #06b6d4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+header p { color: #888; margin-bottom: 16px; }
+.btn { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn:hover { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.card { background: #12121a; border: 1px solid #1f1f2e; border-radius: 12px; padding: 20px; }
+.card h2 { font-size: 16px; margin-bottom: 12px; color: #7c3aed; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+tr { border-bottom: 1px solid #1a1a24; }
+td { padding: 6px 4px; vertical-align: top; }
+td:first-child { color: #888; width: 40%; font-weight: 500; }
+td:last-child { color: #06b6d4; word-break: break-all; }
+.spoofed td:last-child { color: #4ade80; }
+.blocked td:last-child { color: #ef4444; }
+.hash-display { margin-top: 10px; font-size: 11px; color: #888; }
+.hash-display code { color: #06b6d4; background: #1a1a24; padding: 2px 6px; border-radius: 3px; }
+#testCanvas { background: #1a1a24; border-radius: 6px; display: block; margin-bottom: 8px; }
+.font-results { font-size: 11px; max-height: 200px; overflow-y: auto; }
+.font-results .font-item { display: inline-block; padding: 2px 6px; margin: 2px; border-radius: 3px; background: #1a1a24; }
+.font-results .font-item.detected { background: #1a2a1a; color: #4ade80; }
+.font-results .font-item.not-detected { background: #2a1a1a; color: #888; }
+footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #1f1f2e; color: #666; font-size: 12px; }

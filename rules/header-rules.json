@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        { "header": "X-Forwarded-For", "operation": "remove" },
+        { "header": "X-Real-IP", "operation": "remove" },
+        { "header": "Via", "operation": "remove" },
+        { "header": "X-Client-IP", "operation": "remove" },
+        { "header": "X-Originating-IP", "operation": "remove" }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*",
+      "resourceTypes": ["main_frame", "sub_frame", "xmlhttprequest", "script", "image", "stylesheet", "font", "media", "websocket", "other"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        { "header": "ETag", "operation": "remove" }
+      ],
+      "requestHeaders": [
+        { "header": "If-None-Match", "operation": "remove" }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*",
+      "resourceTypes": ["main_frame", "sub_frame", "xmlhttprequest", "script", "image", "stylesheet", "font"]
+    }
+  }
+]

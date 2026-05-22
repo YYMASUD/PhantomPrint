@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhantomPrint - Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo">&#128123;</span>
+        <h1>PhantomPrint</h1>
+      </div>
+      <ul class="nav-links">
+        <li class="nav-item active" data-section="dashboard"><span>&#128202;</span> Dashboard</li>
+        <li class="nav-item" data-section="categories"><span>&#9881;</span> Categories</li>
+        <li class="nav-item" data-section="profiles"><span>&#128100;</span> Profiles</li>
+        <li class="nav-item" data-section="whitelist"><span>&#9989;</span> Whitelist</li>
+        <li class="nav-item" data-section="randomization"><span>&#127922;</span> Randomization</li>
+        <li class="nav-item" data-section="logs"><span>&#128203;</span> Logs & Stats</li>
+        <li class="nav-item" data-section="about"><span>&#8505;</span> About</li>
+      </ul>
+    </nav>
+
+    <main class="content">
+      <!-- Dashboard Section -->
+      <section class="section active" id="section-dashboard">
+        <h2>Dashboard</h2>
+        <div class="dashboard-grid">
+          <div class="card score-card">
+            <div class="card-header">Protection Score</div>
+            <div class="score-big" id="dashScore">0%</div>
+            <div class="score-bar"><div class="score-bar-fill" id="dashScoreBar"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header">Status</div>
+            <div class="status-indicator" id="dashStatus">
+              <span class="status-dot active"></span> Active
+            </div>
+            <div class="dash-actions">
+              <button class="btn btn-primary" id="dashRandomize">Randomize All</button>
+              <button class="btn btn-danger" id="dashReset">Reset to Real</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Current Fingerprint</div>
+            <div class="fp-details" id="dashFingerprint">
+              <div class="fp-row"><span>Browser</span><span id="dashBrowser">--</span></div>
+              <div class="fp-row"><span>OS</span><span id="dashOS">--</span></div>
+              <div class="fp-row"><span>Screen</span><span id="dashScreen">--</span></div>
+              <div class="fp-row"><span>GPU</span><span id="dashGPU">--</span></div>
+              <div class="fp-row"><span>Language</span><span id="dashLang">--</span></div>
+              <div class="fp-row"><span>Timezone</span><span id="dashTZ">--</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Statistics</div>
+            <div class="stats-grid">
+              <div class="stat"><span class="stat-value" id="statSpoofed">0</span><span class="stat-label">APIs Spoofed</span></div>
+              <div class="stat"><span class="stat-value" id="statSites">0</span><span class="stat-label">Sites Protected</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="notice">
+          <strong>&#9888; Note:</strong> PhantomPrint cannot spoof your IP address. Use a VPN for IP-level privacy.
+        </div>
+      </section>
+
+      <!-- Categories Section -->
+      <section class="section" id="section-categories">
+        <h2>Category Controls</h2>
+        <p class="section-desc">Enable or disable spoofing for each fingerprinting category.</p>
+        <div class="categories-list" id="categoriesList"></div>
+      </section>
+
+      <!-- Profiles Section -->
+      <section class="section" id="section-profiles">
+        <h2>Profile Management</h2>
+        <div class="profiles-grid">
+          <div class="card">
+            <div class="card-header">Saved Profiles</div>
+            <div class="profiles-list" id="profilesList"></div>
+            <div class="profile-actions-row">
+              <button class="btn btn-primary" id="saveNewProfile">Save Current as New Profile</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Import / Export</div>
+            <div class="import-export">
+              <button class="btn btn-secondary" id="exportBtn">Export All Settings</button>
+              <div class="file-input-wrap">
+                <button class="btn btn-secondary" id="importBtn">Import Settings</button>
+                <input type="file" id="importFile" accept=".json" hidden>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Whitelist Section -->
+      <section class="section" id="section-whitelist">
+        <h2>Site Whitelist</h2>
+        <p class="section-desc">Sites in the whitelist will not have fingerprint spoofing applied.</p>
+        <div class="card">
+          <div class="whitelist-add">
+            <input type="text" id="whitelistInput" placeholder="Enter domain (e.g., example.com)" class="input">
+            <button class="btn btn-primary" id="addWhitelistBtn">Add</button>
+          </div>
+          <div class="whitelist-list" id="whitelistList"></div>
+        </div>
+      </section>
+
+      <!-- Randomization Section -->
+      <section class="section" id="section-randomization">
+        <h2>Randomization Settings</h2>
+        <div class="card">
+          <div class="card-header">Randomize Fingerprint On</div>
+          <div class="radio-group" id="randomizeOnGroup">
+            <label class="radio-item"><input type="radio" name="randomizeOn" value="pageload"> Every Page Load</label>
+            <label class="radio-item"><input type="radio" name="randomizeOn" value="session" checked> Every Browser Session</label>
+            <label class="radio-item"><input type="radio" name="randomizeOn" value="hourly"> Every Hour</label>
+            <label class="radio-item"><input type="radio" name="randomizeOn" value="manual"> Manual Only</label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Cross-Site Isolation</div>
+          <p class="card-desc">When enabled, each website gets a unique fingerprint, preventing cross-site tracking.</p>
+          <label class="toggle-row">
+            <span>Enable Cross-Site Isolation</span>
+            <label class="switch"><input type="checkbox" id="crossSiteToggle" checked><span class="slider"></span></label>
+          </label>
+        </div>
+        <div class="card">
+          <div class="card-header">WebRTC Mode</div>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="webrtcMode" value="ip_only" checked> Strip Local IPs Only</label>
+            <label class="radio-item"><input type="radio" name="webrtcMode" value="full_block"> Block WebRTC Entirely</label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Session Seed</div>
+          <p class="card-desc">Current seed used for deterministic fingerprint generation.</p>
+          <div class="seed-display">
+            <code id="currentSeed">--</code>
+            <button class="btn btn-small" id="regenerateSeed">Regenerate</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Logs Section -->
+      <section class="section" id="section-logs">
+        <h2>Fingerprinting Logs</h2>
+        <div class="logs-controls">
+          <button class="btn btn-danger" id="clearLogsBtn">Clear Logs</button>
+        </div>
+        <div class="card">
+          <div class="logs-table" id="logsTable">
+            <div class="log-header"><span>Time</span><span>Site</span><span>API</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section class="section" id="section-about">
+        <h2>About PhantomPrint</h2>
+        <div class="card">
+          <p><strong>Version:</strong> 1.0.0</p>
+          <p><strong>License:</strong> MIT</p>
+          <br>
+          <p>PhantomPrint protects against browser fingerprinting by spoofing, randomizing, and blocking over 200 fingerprinting parameters across 20 categories.</p>
+          <br>
+          <p><strong>Features:</strong></p>
+          <ul class="about-list">
+            <li>Deterministic per-site fingerprints (cross-site unlinkability)</li>
+            <li>Consistent spoofed values that pass detection tests</li>
+            <li>Profile management (save/load/import/export)</li>
+            <li>Per-site whitelist support</li>
+            <li>Anti-detection measures (native function signatures, prototype chain preservation)</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

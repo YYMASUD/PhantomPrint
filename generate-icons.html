@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate PhantomPrint Icons</title></head>
+<body>
+<h1>PhantomPrint Icon Generator</h1>
+<p>Right-click each canvas and "Save Image As" to create the icon files.</p>
+<p>Save as: <code>icons/icon16.png</code>, <code>icons/icon48.png</code>, <code>icons/icon128.png</code></p>
+<hr>
+<h3>16x16</h3>
+<canvas id="c16" width="16" height="16"></canvas>
+<h3>48x48</h3>
+<canvas id="c48" width="48" height="48"></canvas>
+<h3>128x128</h3>
+<canvas id="c128" width="128" height="128"></canvas>
+<hr>
+<h3>Download Links</h3>
+<a id="dl16" download="icon16.png">Download 16x16</a><br>
+<a id="dl48" download="icon48.png">Download 48x48</a><br>
+<a id="dl128" download="icon128.png">Download 128x128</a>
+<script>
+function drawIcon(canvas) {
+  const ctx = canvas.getContext('2d');
+  const s = canvas.width;
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, s, s);
+  grad.addColorStop(0, '#7c3aed');
+  grad.addColorStop(1, '#06b6d4');
+  ctx.beginPath();
+  ctx.arc(s/2, s/2, s/2 - 1, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  // Ghost shape
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  const gs = s * 0.6;
+  const gx = (s - gs) / 2;
+  const gy = s * 0.2;
+  ctx.beginPath();
+  ctx.arc(s/2, gy + gs*0.35, gs*0.35, Math.PI, 0);
+  ctx.lineTo(s/2 + gs*0.35, gy + gs*0.85);
+  // Wavy bottom
+  const waveW = gs * 0.175;
+  ctx.quadraticCurveTo(s/2 + gs*0.35 - waveW/2, gy + gs, s/2 + gs*0.35 - waveW, gy + gs*0.85);
+  ctx.quadraticCurveTo(s/2 + waveW/2, gy + gs, s/2, gy + gs*0.85);
+  ctx.quadraticCurveTo(s/2 - waveW/2, gy + gs, s/2 - gs*0.35 + waveW, gy + gs*0.85);
+  ctx.quadraticCurveTo(s/2 - gs*0.35 + waveW/2, gy + gs, s/2 - gs*0.35, gy + gs*0.85);
+  ctx.lineTo(s/2 - gs*0.35, gy + gs*0.35);
+  ctx.closePath();
+  ctx.fill();
+  // Eyes
+  ctx.fillStyle = '#7c3aed';
+  const eyeR = s * 0.06;
+  ctx.beginPath();
+  ctx.arc(s/2 - s*0.1, gy + gs*0.38, eyeR, 0, Math.PI * 2);
+  ctx.arc(s/2 + s*0.1, gy + gs*0.38, eyeR, 0, Math.PI * 2);
+  ctx.fill();
+}
+['c16','c48','c128'].forEach(id => {
+  const c = document.getElementById(id);
+  drawIcon(c);
+  const link = document.getElementById('dl' + id.replace('c',''));
+  link.href = c.toDataURL('image/png');
+});
+</script>
+</body>
+</html>

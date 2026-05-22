@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhantomPrint</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo-icon">&#128123;</span>
+        <span class="logo-text">PhantomPrint</span>
+      </div>
+      <div class="header-right">
+        <span class="status-badge" id="statusBadge">Active</span>
+        <label class="switch" title="Master toggle">
+          <input type="checkbox" id="masterToggle" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </header>
+
+    <!-- Protection Score Ring -->
+    <div class="score-section">
+      <div class="score-ring">
+        <svg viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="42" />
+          <circle class="ring-fill" id="scoreRing" cx="50" cy="50" r="42" stroke-dasharray="0 264" />
+        </svg>
+        <div class="score-center">
+          <span class="score-value" id="scoreValue">0</span>
+          <span class="score-unit">%</span>
+        </div>
+      </div>
+      <div class="score-meta">
+        <span class="score-label">Protection Level</span>
+        <span class="score-sublabel" id="scoreDesc">Initializing...</span>
+      </div>
+    </div>
+
+    <!-- Real-time Fingerprint Preview -->
+    <div class="fingerprint-preview" id="fpPreview">
+      <div class="fp-header">
+        <span>Current Fingerprint</span>
+        <button class="btn-icon" id="copyFP" title="Copy fingerprint hash">&#128203;</button>
+      </div>
+      <div class="fp-grid">
+        <div class="fp-cell">
+          <span class="fp-label">Browser</span>
+          <span class="fp-value" id="fpBrowser">--</span>
+        </div>
+        <div class="fp-cell">
+          <span class="fp-label">OS</span>
+          <span class="fp-value" id="fpOS">--</span>
+        </div>
+        <div class="fp-cell">
+          <span class="fp-label">Screen</span>
+          <span class="fp-value" id="fpScreen">--</span>
+        </div>
+        <div class="fp-cell">
+          <span class="fp-label">GPU</span>
+          <span class="fp-value truncate" id="fpGPU">--</span>
+        </div>
+        <div class="fp-cell">
+          <span class="fp-label">Language</span>
+          <span class="fp-value" id="fpLang">--</span>
+        </div>
+        <div class="fp-cell">
+          <span class="fp-label">Timezone</span>
+          <span class="fp-value" id="fpTZ">--</span>
+        </div>
+        <div class="fp-cell">
+          <span class="fp-label">Cores/RAM</span>
+          <span class="fp-value" id="fpHW">--</span>
+        </div>
+        <div class="fp-cell">
+          <span class="fp-label">Touch</span>
+          <span class="fp-value" id="fpTouch">--</span>
+        </div>
+      </div>
+      <div class="fp-hash">
+        <span class="fp-hash-label">Hash:</span>
+        <code class="fp-hash-value" id="fpHash">--</code>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-row">
+      <button class="btn btn-gradient" id="randomizeBtn">
+        <span class="btn-icon-inner">&#127922;</span> Randomize
+      </button>
+      <button class="btn btn-glass" id="whitelistBtn">
+        <span class="btn-icon-inner">&#9989;</span> Whitelist
+      </button>
+      <button class="btn btn-glass btn-danger" id="resetBtn">
+        <span class="btn-icon-inner">&#9888;</span> Reset
+      </button>
+    </div>
+
+    <!-- Category Quick Toggles -->
+    <div class="section categories-section">
+      <div class="section-header">
+        <span>Protection Categories</span>
+        <span class="cat-count" id="catCount">0/0</span>
+      </div>
+      <div class="category-grid" id="categoryGrid"></div>
+    </div>
+
+    <!-- Profiles -->
+    <div class="section">
+      <div class="section-header"><span>Quick Profiles</span></div>
+      <div class="profiles-row" id="profilesRow"></div>
+    </div>
+
+    <!-- Footer Links -->
+    <footer class="footer">
+      <a href="#" id="openOptions">&#9881; Settings</a>
+      <a href="#" id="openTest">&#128270; Test</a>
+      <a href="#" id="openLogs">&#128203; Logs</a>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
