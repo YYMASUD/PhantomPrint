@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to PhantomPrint</title>
+  <link rel="stylesheet" href="onboarding.css">
+</head>
+<body>
+  <div class="onboarding">
+    <!-- Step 1: Welcome -->
+    <section class="step active" id="step1">
+      <div class="step-content">
+        <div class="hero-shield">
+          <svg width="120" height="120" viewBox="0 0 32 32" fill="none">
+            <defs>
+              <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6C5CE7"/>
+                <stop offset="100%" style="stop-color:#00D2FF"/>
+              </linearGradient>
+            </defs>
+            <path d="M16 2L4 8v8c0 7.2 5.1 13.9 12 16 6.9-2.1 12-8.8 12-16V8L16 2z" fill="url(#shieldGrad)" opacity="0.9"/>
+            <path d="M16 6L8 10v6c0 5.2 3.4 9.8 8 11.2V6z" fill="rgba(255,255,255,0.15)"/>
+            <path d="M13 14.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0zM18 14.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0z" fill="white"/>
+            <path d="M12 18.5c0 0 2 2.5 4.5 2.5s4.5-2.5 4.5-2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <h1 class="hero-title">Welcome to <span class="gradient-text">PhantomPrint</span></h1>
+        <p class="hero-subtitle">Professional-grade browser fingerprint protection that makes you invisible online.</p>
+        <div class="features-row">
+          <div class="feature-chip">🖼️ Canvas Spoofing</div>
+          <div class="feature-chip">🧊 WebGL Protection</div>
+          <div class="feature-chip">🔊 Audio Masking</div>
+          <div class="feature-chip">📡 WebRTC Shield</div>
+          <div class="feature-chip">🔤 Font Defense</div>
+          <div class="feature-chip">🕐 Timezone Spoof</div>
+          <div class="feature-chip">🚫 Tracker Blocker</div>
+          <div class="feature-chip">🍪 Cookie Manager</div>
+          <div class="feature-chip">📱 Mobile Emulation</div>
+          <div class="feature-chip">☁️ Cloud Sync</div>
+        </div>
+        <button class="btn-next" id="toStep2">Get Started →</button>
+      </div>
+    </section>
+
+    <!-- Step 2: Protection Level -->
+    <section class="step" id="step2">
+      <div class="step-content">
+        <h2>Choose Your Protection Level</h2>
+        <p class="step-subtitle">You can change this anytime from the dashboard.</p>
+        <div class="level-cards">
+          <div class="level-card" data-level="quick">
+            <div class="level-icon">🛡️</div>
+            <h3>Quick</h3>
+            <p>Basic fingerprint spoofing. Canvas, WebGL, Audio, and Navigator only.</p>
+            <ul>
+              <li>✅ Core spoofing (4 categories)</li>
+              <li>⏸️ Tracker blocker OFF</li>
+              <li>⏸️ Advanced modules OFF</li>
+            </ul>
+            <div class="level-score">~40% Protection</div>
+          </div>
+          <div class="level-card recommended" data-level="balanced">
+            <div class="level-badge">Recommended</div>
+            <div class="level-icon">🔒</div>
+            <h3>Balanced</h3>
+            <p>Full fingerprint spoofing plus tracker blocking and link cleaning.</p>
+            <ul>
+              <li>✅ All spoofing categories</li>
+              <li>✅ Tracker blocker ON</li>
+              <li>✅ Link cleaner ON</li>
+              <li>⏸️ Mobile / DoH / Proxy OFF</li>
+            </ul>
+            <div class="level-score">~75% Protection</div>
+          </div>
+          <div class="level-card" data-level="maximum">
+            <div class="level-icon">🏰</div>
+            <h3>Maximum</h3>
+            <p>Everything enabled. Maximum privacy with all modules active.</p>
+            <ul>
+              <li>✅ All spoofing categories</li>
+              <li>✅ All privacy modules</li>
+              <li>✅ Session replay blocking</li>
+              <li>✅ Referrer control (smart)</li>
+            </ul>
+            <div class="level-score">~95% Protection</div>
+          </div>
+        </div>
+        <div class="step-actions">
+          <button class="btn-back" id="backToStep1">← Back</button>
+          <button class="btn-next" id="toStep3">Apply & Continue →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Done -->
+    <section class="step" id="step3">
+      <div class="step-content center">
+        <div class="done-icon">✅</div>
+        <h2>You're Protected!</h2>
+        <p class="step-subtitle">PhantomPrint is now active. Your browser fingerprint is being spoofed on every page you visit.</p>
+        <div class="done-tip">
+          <strong>💡 Tip:</strong> Use <kbd>Alt+Shift+P</kbd> to quickly toggle protection on/off, and <kbd>Alt+Shift+R</kbd> to randomize your fingerprint.
+        </div>
+        <div class="done-actions">
+          <button class="btn-primary" id="openTest">🧪 Test My Fingerprint</button>
+          <button class="btn-secondary" id="openDashboard">📊 Open Dashboard</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Progress dots -->
+    <div class="progress-dots">
+      <span class="dot active" data-step="1"></span>
+      <span class="dot" data-step="2"></span>
+      <span class="dot" data-step="3"></span>
+    </div>
+  </div>
+  <script src="onboarding.js"></script>
+</body>
+</html>

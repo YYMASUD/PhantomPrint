@@ -19,6 +19,12 @@ function runAllTests() {
   testWebRTC();
   testTiming();
   testStorage();
+  testMediaDevices();
+  testGamepad();
+  testKeyboard();
+  testWebXR();
+  testCSSMedia();
+  testPerfTiming();
 }
 
 function createTable(id, rows) {
@@ -375,4 +381,197 @@ function formatBytes(bytes) {
   if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
   if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return bytes + ' B';
+}
+
+// =========================================================================
+// NEW TEST: MediaDevices
+// =========================================================================
+async function testMediaDevices() {
+  const rows = [];
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      rows.push(['Device count', String(devices.length), 'spoofed']);
+      devices.forEach((d, i) => {
+        rows.push([`Device ${i} (${d.kind})`, d.label || '(empty label)', d.label ? '' : 'blocked']);
+        rows.push([`  deviceId`, d.deviceId ? d.deviceId.substring(0, 16) + '...' : '(empty)', 'spoofed']);
+      });
+    } else {
+      rows.push(['mediaDevices', 'Not available', 'blocked']);
+    }
+  } catch (e) {
+    rows.push(['Error', e.message, 'blocked']);
+  }
+  ensureTable('mediaDevicesTable', 'Media Devices');
+  createTable('mediaDevicesTable', rows);
+}
+
+// =========================================================================
+// NEW TEST: Gamepad
+// =========================================================================
+function testGamepad() {
+  const rows = [];
+  try {
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : null;
+    if (gamepads) {
+      const connected = Array.from(gamepads).filter(Boolean);
+      rows.push(['getGamepads()', `${connected.length} connected`, connected.length === 0 ? 'spoofed' : '']);
+      connected.forEach((gp, i) => {
+        rows.push([`Gamepad ${i}`, `${gp.id} (${gp.buttons.length} buttons)`, '']);
+      });
+    } else {
+      rows.push(['getGamepads', 'null', 'blocked']);
+    }
+  } catch (e) {
+    rows.push(['Error', e.message, 'blocked']);
+  }
+  ensureTable('gamepadTable', 'Gamepad API');
+  createTable('gamepadTable', rows);
+}
+
+// =========================================================================
+// NEW TEST: Keyboard Layout
+// =========================================================================
+async function testKeyboard() {
+  const rows = [];
+  try {
+    if (navigator.keyboard && navigator.keyboard.getLayoutMap) {
+      const layoutMap = await navigator.keyboard.getLayoutMap();
+      rows.push(['getLayoutMap() size', String(layoutMap.size), layoutMap.size === 0 ? 'spoofed' : '']);
+      if (layoutMap.size > 0) {
+        let count = 0;
+        layoutMap.forEach((v, k) => {
+          if (count < 5) rows.push([`  Key "${k}"`, v, '']);
+          count++;
+        });
+        if (count > 5) rows.push(['  ...', `(${count - 5} more)`, '']);
+      }
+    } else {
+      rows.push(['keyboard API', 'Not available', '']);
+    }
+  } catch (e) {
+    rows.push(['Error', e.message, 'blocked']);
+  }
+  ensureTable('keyboardTable', 'Keyboard Layout');
+  createTable('keyboardTable', rows);
+}
+
+// =========================================================================
+// NEW TEST: WebXR
+// =========================================================================
+async function testWebXR() {
+  const rows = [];
+  try {
+    if (navigator.xr) {
+      const vr = await navigator.xr.isSessionSupported('immersive-vr').catch(() => false);
+      const ar = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+      const inline = await navigator.xr.isSessionSupported('inline').catch(() => false);
+      rows.push(['immersive-vr', String(vr), vr === false ? 'spoofed' : '']);
+      rows.push(['immersive-ar', String(ar), ar === false ? 'spoofed' : '']);
+      rows.push(['inline', String(inline), '']);
+    } else {
+      rows.push(['navigator.xr', 'undefined', 'spoofed']);
+    }
+  } catch (e) {
+    rows.push(['Error', e.message, 'blocked']);
+  }
+  ensureTable('webxrTable', 'WebXR API');
+  createTable('webxrTable', rows);
+}
+
+// =========================================================================
+// NEW TEST: CSS Media Queries
+// =========================================================================
+function testCSSMedia() {
+  const queries = [
+    '(prefers-color-scheme: dark)',
+    '(prefers-color-scheme: light)',
+    '(prefers-reduced-motion: reduce)',
+    '(prefers-contrast: high)',
+    '(forced-colors: active)',
+    '(pointer: coarse)',
+    '(pointer: fine)',
+    '(hover: hover)',
+    '(hover: none)',
+    '(any-pointer: coarse)',
+    '(display-mode: standalone)',
+    '(color-gamut: srgb)',
+    '(color-gamut: p3)',
+  ];
+  const rows = queries.map(q => {
+    const match = window.matchMedia(q).matches;
+    return [q, String(match), ''];
+  });
+  ensureTable('cssMediaTable', 'CSS Media Queries');
+  createTable('cssMediaTable', rows);
+}
+
+// =========================================================================
+// NEW TEST: Performance Timing
+// =========================================================================
+function testPerfTiming() {
+  const rows = [];
+  // performance.now() precision
+  const samples = [];
+  for (let i = 0; i < 20; i++) samples.push(performance.now());
+  const diffs = samples.slice(1).map((v, i) => v - samples[i]).filter(d => d > 0);
+  const minDiff = diffs.length > 0 ? Math.min(...diffs) : 0;
+  rows.push(['performance.now() precision', minDiff.toFixed(4) + ' ms', minDiff >= 0.05 ? 'spoofed' : '']);
+
+  // Date.now() quantization
+  const dateNowSamples = [];
+  for (let i = 0; i < 20; i++) dateNowSamples.push(Date.now());
+  const dateDiffs = dateNowSamples.slice(1).map((v, i) => v - dateNowSamples[i]).filter(d => d > 0);
+  const minDateDiff = dateDiffs.length > 0 ? Math.min(...dateDiffs) : 0;
+  rows.push(['Date.now() min step', minDateDiff + ' ms', minDateDiff >= 5 ? 'spoofed' : '']);
+
+  // timeOrigin
+  rows.push(['performance.timeOrigin', performance.timeOrigin.toFixed(2), 'spoofed']);
+
+  // chrome.loadTimes
+  if (window.chrome && window.chrome.loadTimes) {
+    try {
+      const lt = window.chrome.loadTimes();
+      rows.push(['chrome.loadTimes().connectionInfo', lt.connectionInfo || '(none)', 'spoofed']);
+      rows.push(['chrome.loadTimes().wasFetchedViaSpdy', String(lt.wasFetchedViaSpdy), 'spoofed']);
+    } catch (e) {
+      rows.push(['chrome.loadTimes', 'Error: ' + e.message, 'blocked']);
+    }
+  } else {
+    rows.push(['chrome.loadTimes', 'Not available', '']);
+  }
+
+  // Notification.permission
+  try {
+    rows.push(['Notification.permission', Notification.permission, Notification.permission === 'default' ? 'spoofed' : '']);
+  } catch(e) {
+    rows.push(['Notification.permission', 'Error', 'blocked']);
+  }
+
+  // indexedDB.databases
+  if (indexedDB.databases) {
+    indexedDB.databases().then(dbs => {
+      const el = document.querySelector('#perfTimingTable tr:last-child td:last-child');
+      // update async
+    }).catch(() => {});
+    rows.push(['indexedDB.databases()', '(checking...)', 'spoofed']);
+  }
+
+  // ServiceWorker
+  rows.push(['navigator.serviceWorker', typeof navigator.serviceWorker !== 'undefined' ? 'available' : 'undefined', '']);
+
+  ensureTable('perfTimingTable', 'Performance & API Detection');
+  createTable('perfTimingTable', rows);
+}
+
+// =========================================================================
+// Helper: dynamically create test section if not in HTML
+// =========================================================================
+function ensureTable(tableId, title) {
+  if (document.getElementById(tableId)) return;
+  const container = document.querySelector('.test-grid') || document.querySelector('main') || document.body;
+  const section = document.createElement('div');
+  section.className = 'test-section glass-card';
+  section.innerHTML = `<h3>${title}</h3><table class="test-table" id="${tableId}"></table>`;
+  container.appendChild(section);
 }

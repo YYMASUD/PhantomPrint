@@ -1,0 +1,380 @@
+{
+  "features": {
+    "css-grid": {
+      "chrome": {"28":"n","57":"y","136":"y"},
+      "firefox": {"28":"n","52":"y","138":"y"},
+      "safari": {"10":"n","10.1":"y","18.5":"y"},
+      "edge": {"12":"n","16":"y","136":"y"}
+    },
+    "flexbox": {
+      "chrome": {"4":"n","29":"y","136":"y"},
+      "firefox": {"2":"n","28":"y","138":"y"},
+      "safari": {"3.1":"n","9":"y","18.5":"y"},
+      "edge": {"12":"y","136":"y"}
+    },
+    "webgl": {
+      "chrome": {"8":"n","9":"y","136":"y"},
+      "firefox": {"4":"y","138":"y"},
+      "safari": {"5.1":"n","8":"y","18.5":"y"},
+      "edge": {"12":"y","136":"y"}
+    },
+    "webgl2": {
+      "chrome": {"49":"n","56":"y","136":"y"},
+      "firefox": {"25":"n","51":"y","138":"y"},
+      "safari": {"14":"n","15":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "webgpu": {
+      "chrome": {"94":"n","113":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"17":"y","18.5":"y"},
+      "edge": {"113":"y","136":"y"}
+    },
+    "webrtc": {
+      "chrome": {"23":"y","136":"y"},
+      "firefox": {"22":"y","138":"y"},
+      "safari": {"11":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "service-workers": {
+      "chrome": {"40":"y","136":"y"},
+      "firefox": {"44":"y","138":"y"},
+      "safari": {"11.1":"y","18.5":"y"},
+      "edge": {"17":"y","136":"y"}
+    },
+    "webassembly": {
+      "chrome": {"57":"y","136":"y"},
+      "firefox": {"52":"y","138":"y"},
+      "safari": {"11":"y","18.5":"y"},
+      "edge": {"16":"y","136":"y"}
+    },
+    "sharedarraybuffer": {
+      "chrome": {"68":"y","136":"y"},
+      "firefox": {"79":"y","138":"y"},
+      "safari": {"15.2":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "web-bluetooth": {
+      "chrome": {"56":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "web-serial": {
+      "chrome": {"89":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"89":"y","136":"y"}
+    },
+    "web-usb": {
+      "chrome": {"61":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "web-hid": {
+      "chrome": {"89":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"89":"y","136":"y"}
+    },
+    "idle-detection": {
+      "chrome": {"94":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"94":"y","136":"y"}
+    },
+    "canvas": {
+      "chrome": {"4":"y","136":"y"},
+      "firefox": {"2":"y","138":"y"},
+      "safari": {"3.1":"y","18.5":"y"},
+      "edge": {"12":"y","136":"y"}
+    },
+    "offscreen-canvas": {
+      "chrome": {"69":"y","136":"y"},
+      "firefox": {"105":"y","138":"y"},
+      "safari": {"16.4":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "css-container-queries": {
+      "chrome": {"105":"y","136":"y"},
+      "firefox": {"110":"y","138":"y"},
+      "safari": {"16":"y","18.5":"y"},
+      "edge": {"105":"y","136":"y"}
+    },
+    "css-nesting": {
+      "chrome": {"120":"y","136":"y"},
+      "firefox": {"117":"y","138":"y"},
+      "safari": {"17.2":"y","18.5":"y"},
+      "edge": {"120":"y","136":"y"}
+    },
+    "view-transitions": {
+      "chrome": {"111":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18":"y","18.5":"y"},
+      "edge": {"111":"y","136":"y"}
+    },
+    "css-has": {
+      "chrome": {"105":"y","136":"y"},
+      "firefox": {"121":"y","138":"y"},
+      "safari": {"15.4":"y","18.5":"y"},
+      "edge": {"105":"y","136":"y"}
+    },
+    "backdrop-filter": {
+      "chrome": {"76":"y","136":"y"},
+      "firefox": {"103":"y","138":"y"},
+      "safari": {"9":"y x","18.5":"y"},
+      "edge": {"17":"y","136":"y"}
+    },
+    "css-subgrid": {
+      "chrome": {"117":"y","136":"y"},
+      "firefox": {"71":"y","138":"y"},
+      "safari": {"16":"y","18.5":"y"},
+      "edge": {"117":"y","136":"y"}
+    },
+    "css-at-layer": {
+      "chrome": {"99":"y","136":"y"},
+      "firefox": {"97":"y","138":"y"},
+      "safari": {"15.4":"y","18.5":"y"},
+      "edge": {"99":"y","136":"y"}
+    },
+    "accent-color": {
+      "chrome": {"93":"y","136":"y"},
+      "firefox": {"92":"y","138":"y"},
+      "safari": {"15.4":"y","18.5":"y"},
+      "edge": {"93":"y","136":"y"}
+    },
+    "aspect-ratio": {
+      "chrome": {"88":"y","136":"y"},
+      "firefox": {"89":"y","138":"y"},
+      "safari": {"15":"y","18.5":"y"},
+      "edge": {"88":"y","136":"y"}
+    },
+    "content-visibility": {
+      "chrome": {"85":"y","136":"y"},
+      "firefox": {"125":"y","138":"y"},
+      "safari": {"18":"y","18.5":"y"},
+      "edge": {"85":"y","136":"y"}
+    },
+    "contain-intrinsic-size": {
+      "chrome": {"83":"y","136":"y"},
+      "firefox": {"107":"y","138":"y"},
+      "safari": {"17":"y","18.5":"y"},
+      "edge": {"83":"y","136":"y"}
+    },
+    "overscroll-behavior": {
+      "chrome": {"63":"y","136":"y"},
+      "firefox": {"59":"y","138":"y"},
+      "safari": {"16":"y","18.5":"y"},
+      "edge": {"18":"y","136":"y"}
+    },
+    "intersection-observer": {
+      "chrome": {"51":"y","136":"y"},
+      "firefox": {"55":"y","138":"y"},
+      "safari": {"12.1":"y","18.5":"y"},
+      "edge": {"15":"y","136":"y"}
+    },
+    "resize-observer": {
+      "chrome": {"64":"y","136":"y"},
+      "firefox": {"69":"y","138":"y"},
+      "safari": {"13.1":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "mutation-observer": {
+      "chrome": {"18":"y","136":"y"},
+      "firefox": {"14":"y","138":"y"},
+      "safari": {"6":"y","18.5":"y"},
+      "edge": {"12":"y","136":"y"}
+    },
+    "performance-observer": {
+      "chrome": {"52":"y","136":"y"},
+      "firefox": {"57":"y","138":"y"},
+      "safari": {"11":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "broadcast-channel": {
+      "chrome": {"54":"y","136":"y"},
+      "firefox": {"38":"y","138":"y"},
+      "safari": {"15.4":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "fetch": {
+      "chrome": {"42":"y","136":"y"},
+      "firefox": {"39":"y","138":"y"},
+      "safari": {"10.1":"y","18.5":"y"},
+      "edge": {"14":"y","136":"y"}
+    },
+    "streams": {
+      "chrome": {"43":"y","136":"y"},
+      "firefox": {"102":"y","138":"y"},
+      "safari": {"14.1":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "web-animations": {
+      "chrome": {"36":"y","136":"y"},
+      "firefox": {"48":"y","138":"y"},
+      "safari": {"13.1":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "indexeddb2": {
+      "chrome": {"58":"y","136":"y"},
+      "firefox": {"51":"y","138":"y"},
+      "safari": {"14":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "websockets": {
+      "chrome": {"14":"y","136":"y"},
+      "firefox": {"11":"y","138":"y"},
+      "safari": {"6":"y","18.5":"y"},
+      "edge": {"12":"y","136":"y"}
+    },
+    "geolocation": {
+      "chrome": {"5":"y","136":"y"},
+      "firefox": {"3.5":"y","138":"y"},
+      "safari": {"5":"y","18.5":"y"},
+      "edge": {"12":"y","136":"y"}
+    },
+    "notifications": {
+      "chrome": {"22":"y","136":"y"},
+      "firefox": {"22":"y","138":"y"},
+      "safari": {"16":"y","18.5":"y"},
+      "edge": {"14":"y","136":"y"}
+    },
+    "push-api": {
+      "chrome": {"42":"y","136":"y"},
+      "firefox": {"44":"y","138":"y"},
+      "safari": {"16":"y","18.5":"y"},
+      "edge": {"17":"y","136":"y"}
+    },
+    "clipboard": {
+      "chrome": {"66":"y","136":"y"},
+      "firefox": {"63":"y","138":"y"},
+      "safari": {"13.1":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "battery-api": {
+      "chrome": {"38":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "gamepad": {
+      "chrome": {"21":"y","136":"y"},
+      "firefox": {"29":"y","138":"y"},
+      "safari": {"10.1":"y","18.5":"y"},
+      "edge": {"12":"y","136":"y"}
+    },
+    "credential-management": {
+      "chrome": {"51":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"13":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "payment-request": {
+      "chrome": {"60":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"11.1":"y","18.5":"y"},
+      "edge": {"15":"y","136":"y"}
+    },
+    "picture-in-picture": {
+      "chrome": {"70":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"13.1":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "media-session": {
+      "chrome": {"73":"y","136":"y"},
+      "firefox": {"82":"y","138":"y"},
+      "safari": {"15":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "screen-capture": {
+      "chrome": {"72":"y","136":"y"},
+      "firefox": {"66":"y","138":"y"},
+      "safari": {"13":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "speech-synthesis": {
+      "chrome": {"33":"y","136":"y"},
+      "firefox": {"49":"y","138":"y"},
+      "safari": {"7":"y","18.5":"y"},
+      "edge": {"14":"y","136":"y"}
+    },
+    "speech-recognition": {
+      "chrome": {"33":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"14.1":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "web-share": {
+      "chrome": {"89":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"15":"y","18.5":"y"},
+      "edge": {"93":"y","136":"y"}
+    },
+    "navigator-userAgentData": {
+      "chrome": {"90":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"90":"y","136":"y"}
+    },
+    "navigator-connection": {
+      "chrome": {"61":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "navigator-deviceMemory": {
+      "chrome": {"63":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "performance-memory": {
+      "chrome": {"7":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "requestFileSystem": {
+      "chrome": {"13":"y","136":"y"},
+      "firefox": {"138":"n"},
+      "safari": {"18.5":"n"},
+      "edge": {"79":"y","136":"y"}
+    },
+    "storage-estimate": {
+      "chrome": {"55":"y","136":"y"},
+      "firefox": {"51":"y","138":"y"},
+      "safari": {"17":"y","18.5":"y"},
+      "edge": {"79":"y","136":"y"}
+    }
+  },
+  "cssProperties": {
+    "chrome": {
+      "136": ["grid","flex","gap","container","container-type","container-name","backdrop-filter","accent-color","aspect-ratio","content-visibility","contain-intrinsic-size","overscroll-behavior","color-scheme","text-decoration-thickness","text-underline-offset","scroll-snap-type","scroll-margin","scroll-padding","overflow-anchor","overscroll-behavior-x","overscroll-behavior-y","inset","inset-block","inset-inline","margin-block","margin-inline","padding-block","padding-inline","border-block","border-inline","place-items","place-content","place-self"]
+    },
+    "firefox": {
+      "138": ["grid","flex","gap","backdrop-filter","accent-color","aspect-ratio","content-visibility","contain-intrinsic-size","overscroll-behavior","color-scheme","text-decoration-thickness","text-underline-offset","scroll-snap-type","scroll-margin","scroll-padding","overflow-anchor","inset","inset-block","inset-inline","margin-block","margin-inline","padding-block","padding-inline","border-block","border-inline","place-items","place-content","place-self"]
+    },
+    "safari": {
+      "18.5": ["grid","flex","gap","-webkit-backdrop-filter","backdrop-filter","accent-color","aspect-ratio","content-visibility","overscroll-behavior","color-scheme","text-decoration-thickness","text-underline-offset","scroll-snap-type","scroll-margin","scroll-padding","inset","inset-block","inset-inline","margin-block","margin-inline","padding-block","padding-inline","border-block","border-inline","place-items","place-content","place-self"]
+    },
+    "edge": {
+      "136": ["grid","flex","gap","container","container-type","container-name","backdrop-filter","accent-color","aspect-ratio","content-visibility","contain-intrinsic-size","overscroll-behavior","color-scheme","text-decoration-thickness","text-underline-offset","scroll-snap-type","scroll-margin","scroll-padding","overflow-anchor","overscroll-behavior-x","overscroll-behavior-y","inset","inset-block","inset-inline","margin-block","margin-inline","padding-block","padding-inline","border-block","border-inline","place-items","place-content","place-self"]
+    }
+  },
+  "apiExistence": {
+    "chrome": {
+      "136": ["navigator.userAgentData","navigator.connection","navigator.deviceMemory","navigator.getBattery","navigator.bluetooth","navigator.usb","navigator.hid","navigator.serial","navigator.mediaDevices","navigator.credentials","navigator.permissions","navigator.storage","navigator.serviceWorker","navigator.share","navigator.clipboard","performance.memory","window.SharedArrayBuffer","window.showDirectoryPicker","window.showOpenFilePicker","window.showSaveFilePicker","CSS.highlights","window.EyeDropper","window.IdleDetector","window.BarcodeDetector"]
+    },
+    "firefox": {
+      "138": ["navigator.mediaDevices","navigator.permissions","navigator.storage","navigator.serviceWorker","navigator.clipboard","window.SharedArrayBuffer","navigator.credentials"]
+    },
+    "safari": {
+      "18.5": ["navigator.mediaDevices","navigator.permissions","navigator.storage","navigator.serviceWorker","navigator.clipboard","navigator.share","navigator.credentials","window.SharedArrayBuffer","window.WebKitMediaSource"]
+    },
+    "edge": {
+      "136": ["navigator.userAgentData","navigator.connection","navigator.deviceMemory","navigator.getBattery","navigator.bluetooth","navigator.usb","navigator.hid","navigator.serial","navigator.mediaDevices","navigator.credentials","navigator.permissions","navigator.storage","navigator.serviceWorker","navigator.share","navigator.clipboard","performance.memory","window.SharedArrayBuffer","window.showDirectoryPicker","window.showOpenFilePicker","window.showSaveFilePicker"]
+    }
+  }
+}

@@ -2,124 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=380, initial-scale=1.0">
   <title>PhantomPrint</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="container" id="app">
-    <!-- Header -->
-    <header class="header">
+  <div class="popup">
+    <!-- HEADER -->
+    <header class="header" id="header">
       <div class="header-left">
-        <span class="logo-icon">&#128123;</span>
-        <span class="logo-text">PhantomPrint</span>
+        <div class="logo">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <defs>
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6C5CE7"/>
+                <stop offset="100%" style="stop-color:#00D2FF"/>
+              </linearGradient>
+            </defs>
+            <path d="M16 2L4 8v8c0 7.2 5.1 13.9 12 16 6.9-2.1 12-8.8 12-16V8L16 2z" fill="url(#logoGrad)" opacity="0.9"/>
+            <path d="M16 6L8 10v6c0 5.2 3.4 9.8 8 11.2V6z" fill="rgba(255,255,255,0.15)"/>
+            <path d="M13 14.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0zM18 14.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0zM12 18.5c0 0 2 2.5 4.5 2.5s4.5-2.5 4.5-2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="header-title">
+          <h1>PhantomPrint</h1>
+          <span class="version" id="versionLabel">v3.0</span>
+        </div>
       </div>
       <div class="header-right">
-        <span class="status-badge" id="statusBadge">Active</span>
-        <label class="switch" title="Master toggle">
-          <input type="checkbox" id="masterToggle" checked>
-          <span class="slider round"></span>
+        <label class="master-toggle" id="masterToggle">
+          <input type="checkbox" id="masterSwitch" checked>
+          <span class="toggle-slider"></span>
         </label>
       </div>
     </header>
 
-    <!-- Protection Score Ring -->
-    <div class="score-section">
-      <div class="score-ring">
-        <svg viewBox="0 0 100 100">
-          <circle class="ring-bg" cx="50" cy="50" r="42" />
-          <circle class="ring-fill" id="scoreRing" cx="50" cy="50" r="42" stroke-dasharray="0 264" />
+    <!-- PROTECTION SCORE -->
+    <div class="score-section" id="scoreSection">
+      <div class="score-gauge">
+        <svg viewBox="0 0 120 120" class="gauge-svg">
+          <circle cx="60" cy="60" r="50" class="gauge-bg"/>
+          <circle cx="60" cy="60" r="50" class="gauge-fill" id="gaugeCircle"
+            stroke-dasharray="314" stroke-dashoffset="62.8"/>
         </svg>
-        <div class="score-center">
-          <span class="score-value" id="scoreValue">0</span>
-          <span class="score-unit">%</span>
+        <div class="gauge-label">
+          <span class="gauge-value" id="scoreValue">80</span>
+          <span class="gauge-unit">%</span>
         </div>
       </div>
-      <div class="score-meta">
-        <span class="score-label">Protection Level</span>
-        <span class="score-sublabel" id="scoreDesc">Initializing...</span>
+      <div class="score-text">Protection Score</div>
+    </div>
+
+    <!-- PROFILE CARD -->
+    <div class="profile-card" id="profileCard">
+      <div class="profile-header">
+        <span class="profile-name" id="profileName">Default Profile</span>
+        <div class="randomize-group">
+          <button class="btn-icon randomize-btn" id="randomizeBtn" title="Randomize fingerprint">🎲</button>
+          <button class="btn-icon randomize-menu-btn" id="randomizeMenu" title="Constrained Randomization">▼</button>
+          <div id="randomizeDropdown" class="randomize-dropdown hidden">
+            <button class="dropdown-item" data-os="Windows" data-browser="Chrome">🪟 Win + Chrome</button>
+            <button class="dropdown-item" data-os="macOS" data-browser="Safari">🍎 Mac + Safari</button>
+            <button class="dropdown-item" data-os="macOS" data-browser="Chrome">🍎 Mac + Chrome</button>
+            <button class="dropdown-item" data-os="Linux" data-browser="Firefox">🐧 Linux + Firefox</button>
+            <button class="dropdown-item" data-os="Android" data-browser="Chrome">📱 Android + Chrome</button>
+            <button class="dropdown-item" data-os="iOS" data-browser="Safari">📱 iOS + Safari</button>
+            <hr class="dropdown-divider">
+            <button class="dropdown-item" data-action="atoz">🔥 A–Z Full Random</button>
+          </div>
+        </div>
+      </div>
+      <div class="profile-grid">
+        <div class="profile-item"><span class="pi-icon">🌐</span><span class="pi-label">Browser</span><span class="pi-value" id="profBrowser">Chrome 136</span></div>
+        <div class="profile-item"><span class="pi-icon">💻</span><span class="pi-label">OS</span><span class="pi-value" id="profOS">Windows 11</span></div>
+        <div class="profile-item"><span class="pi-icon">📐</span><span class="pi-label">Screen</span><span class="pi-value" id="profScreen">1920×1080</span></div>
+        <div class="profile-item"><span class="pi-icon">🎮</span><span class="pi-label">GPU</span><span class="pi-value" id="profGPU" title="">NVIDIA RTX 4070</span></div>
+        <div class="profile-item"><span class="pi-icon">🔌</span><span class="pi-label">Proxy</span><span class="pi-value" id="profProxy"><span class="status-dot dot-off"></span> Not Set</span></div>
       </div>
     </div>
 
-    <!-- Real-time Fingerprint Preview -->
-    <div class="fingerprint-preview" id="fpPreview">
-      <div class="fp-header">
-        <span>Current Fingerprint</span>
-        <button class="btn-icon" id="copyFP" title="Copy fingerprint hash">&#128203;</button>
-      </div>
-      <div class="fp-grid">
-        <div class="fp-cell">
-          <span class="fp-label">Browser</span>
-          <span class="fp-value" id="fpBrowser">--</span>
-        </div>
-        <div class="fp-cell">
-          <span class="fp-label">OS</span>
-          <span class="fp-value" id="fpOS">--</span>
-        </div>
-        <div class="fp-cell">
-          <span class="fp-label">Screen</span>
-          <span class="fp-value" id="fpScreen">--</span>
-        </div>
-        <div class="fp-cell">
-          <span class="fp-label">GPU</span>
-          <span class="fp-value truncate" id="fpGPU">--</span>
-        </div>
-        <div class="fp-cell">
-          <span class="fp-label">Language</span>
-          <span class="fp-value" id="fpLang">--</span>
-        </div>
-        <div class="fp-cell">
-          <span class="fp-label">Timezone</span>
-          <span class="fp-value" id="fpTZ">--</span>
-        </div>
-        <div class="fp-cell">
-          <span class="fp-label">Cores/RAM</span>
-          <span class="fp-value" id="fpHW">--</span>
-        </div>
-        <div class="fp-cell">
-          <span class="fp-label">Touch</span>
-          <span class="fp-value" id="fpTouch">--</span>
-        </div>
-      </div>
-      <div class="fp-hash">
-        <span class="fp-hash-label">Hash:</span>
-        <code class="fp-hash-value" id="fpHash">--</code>
+    <!-- QUICK TOGGLES -->
+    <div class="toggles-section" id="togglesSection">
+      <h3 class="section-title">Quick Toggles</h3>
+      <div class="toggles-grid" id="togglesGrid">
+        <label class="toggle-item" data-cat="canvas"><span class="ti-icon">🖼️</span><span class="ti-label">Canvas</span><input type="checkbox" checked data-key="canvas"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="webgl"><span class="ti-icon">🧊</span><span class="ti-label">WebGL</span><input type="checkbox" checked data-key="webgl"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="audio"><span class="ti-icon">🔊</span><span class="ti-label">Audio</span><input type="checkbox" checked data-key="audio"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="webrtc"><span class="ti-icon">📡</span><span class="ti-label">WebRTC</span><input type="checkbox" checked data-key="webrtc"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="fonts"><span class="ti-icon">🔤</span><span class="ti-label">Fonts</span><input type="checkbox" checked data-key="fonts"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="timezone"><span class="ti-icon">🕐</span><span class="ti-label">Timezone</span><input type="checkbox" checked data-key="timezone"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="behavior"><span class="ti-icon">🤖</span><span class="ti-label">Behavior</span><input type="checkbox" checked data-key="behavior"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="headers"><span class="ti-icon">📨</span><span class="ti-label">Headers</span><input type="checkbox" checked data-key="headers"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="storage"><span class="ti-icon">💾</span><span class="ti-label">Storage</span><input type="checkbox" checked data-key="storage"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="proxy"><span class="ti-icon">🌍</span><span class="ti-label">Proxy</span><input type="checkbox" data-key="proxy"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="tracker" id="trackerToggleItem"><span class="ti-icon">🚫</span><span class="ti-label">Trackers</span><input type="checkbox" checked id="trackerToggle"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="replay" id="replayToggleItem"><span class="ti-icon">🎬</span><span class="ti-label">Replay</span><input type="checkbox" checked id="replayToggle"><span class="ti-switch"></span></label>
+        <label class="toggle-item" data-cat="linkClean" id="linkToggleItem"><span class="ti-icon">🔗</span><span class="ti-label">Links</span><input type="checkbox" checked id="linkCleanToggle"><span class="ti-switch"></span></label>
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="actions-row">
-      <button class="btn btn-gradient" id="randomizeBtn">
-        <span class="btn-icon-inner">&#127922;</span> Randomize
-      </button>
-      <button class="btn btn-glass" id="whitelistBtn">
-        <span class="btn-icon-inner">&#9989;</span> Whitelist
-      </button>
-      <button class="btn btn-glass btn-danger" id="resetBtn">
-        <span class="btn-icon-inner">&#9888;</span> Reset
-      </button>
-    </div>
-
-    <!-- Category Quick Toggles -->
-    <div class="section categories-section">
-      <div class="section-header">
-        <span>Protection Categories</span>
-        <span class="cat-count" id="catCount">0/0</span>
+    <!-- SITE INFO -->
+    <div class="site-info" id="siteInfo">
+      <div class="site-row">
+        <div class="site-risk">
+          <span class="risk-label">Site Risk:</span>
+          <div class="risk-bar"><div class="risk-fill" id="riskFill" style="width:15%"></div></div>
+          <span class="risk-score" id="riskScore">Low</span>
+        </div>
+        <div class="site-blocked">
+          <span class="blocked-count" id="blockedCount">0</span>
+          <span class="blocked-label">APIs blocked</span>
+        </div>
       </div>
-      <div class="category-grid" id="categoryGrid"></div>
+      <button class="btn-whitelist" id="whitelistBtn">☰ Whitelist Site</button>
     </div>
 
-    <!-- Profiles -->
-    <div class="section">
-      <div class="section-header"><span>Quick Profiles</span></div>
-      <div class="profiles-row" id="profilesRow"></div>
-    </div>
-
-    <!-- Footer Links -->
-    <footer class="footer">
-      <a href="#" id="openOptions">&#9881; Settings</a>
-      <a href="#" id="openTest">&#128270; Test</a>
-      <a href="#" id="openLogs">&#128203; Logs</a>
+    <!-- FOOTER -->
+    <footer class="footer" id="footer">
+      <button class="footer-btn primary" id="dashboardBtn">📊 Dashboard</button>
+      <button class="footer-btn" id="cookieBtn" title="Cookie Manager">🍪 Cookies</button>
+      <button class="footer-btn" id="testBtn">🧪 Test</button>
+      <button class="footer-btn icon-btn" id="settingsBtn" title="Settings">⚙️</button>
     </footer>
   </div>
   <script src="popup.js"></script>

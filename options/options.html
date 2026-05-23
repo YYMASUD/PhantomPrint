@@ -3,184 +3,476 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhantomPrint - Settings</title>
+  <title>PhantomPrint — Dashboard</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
   <div class="app">
-    <nav class="sidebar">
-      <div class="sidebar-header">
-        <span class="logo">&#128123;</span>
-        <h1>PhantomPrint</h1>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <defs><linearGradient id="sLogo" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#6C5CE7"/><stop offset="100%" style="stop-color:#00D2FF"/></linearGradient></defs>
+          <path d="M16 2L4 8v8c0 7.2 5.1 13.9 12 16 6.9-2.1 12-8.8 12-16V8L16 2z" fill="url(#sLogo)" opacity="0.9"/>
+          <path d="M13 14.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0zM18 14.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0z" fill="white"/>
+        </svg>
+        <div>
+          <div class="brand-name">PhantomPrint</div>
+          <div class="brand-version" id="brandVersion">v3.0</div>
+        </div>
       </div>
-      <ul class="nav-links">
-        <li class="nav-item active" data-section="dashboard"><span>&#128202;</span> Dashboard</li>
-        <li class="nav-item" data-section="categories"><span>&#9881;</span> Categories</li>
-        <li class="nav-item" data-section="profiles"><span>&#128100;</span> Profiles</li>
-        <li class="nav-item" data-section="whitelist"><span>&#9989;</span> Whitelist</li>
-        <li class="nav-item" data-section="randomization"><span>&#127922;</span> Randomization</li>
-        <li class="nav-item" data-section="logs"><span>&#128203;</span> Logs & Stats</li>
-        <li class="nav-item" data-section="about"><span>&#8505;</span> About</li>
-      </ul>
-    </nav>
 
-    <main class="content">
-      <!-- Dashboard Section -->
-      <section class="section active" id="section-dashboard">
-        <h2>Dashboard</h2>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <a class="nav-item active" data-tab="dashboard"><span class="nav-icon">🏠</span><span>Dashboard</span></a>
+        <a class="nav-item" data-tab="profiles"><span class="nav-icon">👤</span><span>Profiles</span></a>
+        <a class="nav-item" data-tab="spoofing"><span class="nav-icon">🔧</span><span>Spoofing</span></a>
+        <a class="nav-item" data-tab="proxy"><span class="nav-icon">🌐</span><span>Proxy Manager</span></a>
+        <a class="nav-item" data-tab="monitoring"><span class="nav-icon">📊</span><span>Monitoring</span></a>
+        <a class="nav-item" data-tab="privacy"><span class="nav-icon">🛡️</span><span>Privacy Tools</span></a>
+        <a class="nav-item" data-tab="mobile"><span class="nav-icon">📱</span><span>Mobile Emulation</span></a>
+        <a class="nav-item" data-tab="security"><span class="nav-icon">🔒</span><span>Security</span></a>
+        <a class="nav-item" data-tab="sync"><span class="nav-icon">☁️</span><span>Data & Sync</span></a>
+        <a class="nav-item" data-tab="network"><span class="nav-icon">📡</span><span>Network</span></a>
+        <a class="nav-item" data-tab="test"><span class="nav-icon">🧪</span><span>FP Test</span></a>
+        <a class="nav-item" data-tab="whitelist"><span class="nav-icon">📋</span><span>Whitelist</span></a>
+        <a class="nav-item" data-tab="automation"><span class="nav-icon">🤖</span><span>Automation</span></a>
+        <a class="nav-item" data-tab="updates"><span class="nav-icon">🔄</span><span>Updates</span></a>
+        <a class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main" id="main">
+
+      <!-- TAB: Dashboard -->
+      <section class="tab-content active" id="tab-dashboard">
+        <div class="tab-header"><h2>Dashboard</h2><p>Overview of your fingerprint protection status</p></div>
         <div class="dashboard-grid">
-          <div class="card score-card">
-            <div class="card-header">Protection Score</div>
-            <div class="score-big" id="dashScore">0%</div>
-            <div class="score-bar"><div class="score-bar-fill" id="dashScoreBar"></div></div>
+          <div class="dash-gauge-card">
+            <svg viewBox="0 0 200 200" class="dash-gauge-svg" id="dashGaugeSvg">
+              <circle cx="100" cy="100" r="85" class="dg-bg"/>
+              <circle cx="100" cy="100" r="85" class="dg-fill" id="dashGaugeFill" stroke-dasharray="534" stroke-dashoffset="107"/>
+            </svg>
+            <div class="dg-label"><span class="dg-value" id="dashScore">80</span><span class="dg-pct">%</span><span class="dg-sub">Protected</span></div>
           </div>
-          <div class="card">
-            <div class="card-header">Status</div>
-            <div class="status-indicator" id="dashStatus">
-              <span class="status-dot active"></span> Active
-            </div>
-            <div class="dash-actions">
-              <button class="btn btn-primary" id="dashRandomize">Randomize All</button>
-              <button class="btn btn-danger" id="dashReset">Reset to Real</button>
-            </div>
+          <div class="dash-stats">
+            <div class="stat-card"><div class="stat-value" id="statSites">0</div><div class="stat-label">Sites Visited</div></div>
+            <div class="stat-card"><div class="stat-value" id="statBlocked">0</div><div class="stat-label">APIs Blocked</div></div>
+            <div class="stat-card"><div class="stat-value" id="statChanges">0</div><div class="stat-label">FP Changes</div></div>
+            <div class="stat-card"><div class="stat-value" id="statAlerts">0</div><div class="stat-label">Alerts</div></div>
           </div>
-          <div class="card">
-            <div class="card-header">Current Fingerprint</div>
-            <div class="fp-details" id="dashFingerprint">
-              <div class="fp-row"><span>Browser</span><span id="dashBrowser">--</span></div>
-              <div class="fp-row"><span>OS</span><span id="dashOS">--</span></div>
-              <div class="fp-row"><span>Screen</span><span id="dashScreen">--</span></div>
-              <div class="fp-row"><span>GPU</span><span id="dashGPU">--</span></div>
-              <div class="fp-row"><span>Language</span><span id="dashLang">--</span></div>
-              <div class="fp-row"><span>Timezone</span><span id="dashTZ">--</span></div>
+          <div class="dash-profile-card glass-card">
+            <h3>Active Profile</h3>
+            <div class="dp-details" id="dashProfile">
+              <div class="dp-row"><span>Browser:</span><span id="dpBrowser">Chrome 136</span></div>
+              <div class="dp-row"><span>OS:</span><span id="dpOS">Windows 11</span></div>
+              <div class="dp-row"><span>GPU:</span><span id="dpGPU">NVIDIA RTX 4070</span></div>
+              <div class="dp-row"><span>Screen:</span><span id="dpScreen">1920×1080</span></div>
+              <div class="dp-row"><span>Language:</span><span id="dpLang">en-US</span></div>
+              <div class="dp-row"><span>Timezone:</span><span id="dpTZ">America/New_York</span></div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-header">Statistics</div>
-            <div class="stats-grid">
-              <div class="stat"><span class="stat-value" id="statSpoofed">0</span><span class="stat-label">APIs Spoofed</span></div>
-              <div class="stat"><span class="stat-value" id="statSites">0</span><span class="stat-label">Sites Protected</span></div>
+          <div class="dash-data-card glass-card">
+            <h3>Data Sources</h3>
+            <div class="data-sources" id="dataSources">
+              <div class="ds-item"><span class="ds-status">✅</span><span>User-Agents DB</span></div>
+              <div class="ds-item"><span class="ds-status">✅</span><span>StatCounter</span></div>
+              <div class="ds-item"><span class="ds-status">✅</span><span>CanIUse</span></div>
+              <div class="ds-item"><span class="ds-status">✅</span><span>WebGL Profiles</span></div>
+              <div class="ds-item"><span class="ds-status">✅</span><span>AmIUnique</span></div>
+              <div class="ds-item"><span class="ds-status">✅</span><span>UA Categories</span></div>
+              <div class="ds-item"><span class="ds-status">✅</span><span>TLS Fingerprints</span></div>
             </div>
           </div>
         </div>
-        <div class="notice">
-          <strong>&#9888; Note:</strong> PhantomPrint cannot spoof your IP address. Use a VPN for IP-level privacy.
+      </section>
+
+      <!-- TAB: Profiles -->
+      <section class="tab-content" id="tab-profiles">
+        <div class="tab-header"><h2>Profiles</h2><p>Manage your fingerprint profiles</p></div>
+        <div class="profiles-actions">
+          <button class="btn gradient" id="btnNewProfile">+ Create Profile</button>
+          <button class="btn" id="btnRandomProfile">🎲 Generate Random</button>
+          <button class="btn" id="btnImportProfile">📥 Import</button>
+          <button class="btn" id="btnExportProfiles">📤 Export All</button>
+        </div>
+        <div class="preset-profiles">
+          <h3>Pre-built Profiles</h3>
+          <div class="preset-grid" id="presetGrid">
+            <button class="preset-card" data-preset="win-chrome"><span>💻</span><span>Win 11 Chrome</span></button>
+            <button class="preset-card" data-preset="mac-safari"><span>🍎</span><span>macOS Safari</span></button>
+            <button class="preset-card" data-preset="linux-firefox"><span>🐧</span><span>Ubuntu Firefox</span></button>
+            <button class="preset-card" data-preset="android-chrome"><span>📱</span><span>Galaxy S24</span></button>
+            <button class="preset-card" data-preset="ios-safari"><span>📱</span><span>iPhone 15 Pro</span></button>
+            <button class="preset-card" data-preset="ipad-safari"><span>📱</span><span>iPad Pro</span></button>
+            <button class="preset-card" data-preset="win-edge"><span>💻</span><span>Win 11 Edge</span></button>
+            <button class="preset-card" data-preset="pixel-chrome"><span>📱</span><span>Pixel 9 Chrome</span></button>
+          </div>
+        </div>
+        <div class="profile-list" id="profileList">
+          <div class="profile-entry"><div class="pe-name">Default Profile</div><div class="pe-info">Chrome 136 · Windows 11 · 1920×1080</div><div class="pe-badge active">Active</div></div>
         </div>
       </section>
 
-      <!-- Categories Section -->
-      <section class="section" id="section-categories">
-        <h2>Category Controls</h2>
-        <p class="section-desc">Enable or disable spoofing for each fingerprinting category.</p>
-        <div class="categories-list" id="categoriesList"></div>
+      <!-- TAB: Spoofing Settings -->
+      <section class="tab-content" id="tab-spoofing">
+        <div class="tab-header"><h2>Spoofing Settings</h2><p>Fine-grained control over each spoofing category</p></div>
+        <div class="spoofing-categories" id="spoofingCategories">
+          <!-- Generated by JS -->
+        </div>
       </section>
 
-      <!-- Profiles Section -->
-      <section class="section" id="section-profiles">
-        <h2>Profile Management</h2>
-        <div class="profiles-grid">
-          <div class="card">
-            <div class="card-header">Saved Profiles</div>
-            <div class="profiles-list" id="profilesList"></div>
-            <div class="profile-actions-row">
-              <button class="btn btn-primary" id="saveNewProfile">Save Current as New Profile</button>
+      <!-- TAB: Proxy Manager -->
+      <section class="tab-content" id="tab-proxy">
+        <div class="tab-header"><h2>Proxy Manager</h2><p>Route traffic through proxies to match fingerprint location</p></div>
+        <div class="proxy-add glass-card">
+          <h3>Add Proxy</h3>
+          <div class="proxy-form">
+            <select id="proxyProtocol"><option value="http">HTTP</option><option value="https">HTTPS</option><option value="socks4">SOCKS4</option><option value="socks5">SOCKS5</option></select>
+            <input type="text" id="proxyHost" placeholder="Host / IP">
+            <input type="number" id="proxyPort" placeholder="Port">
+            <input type="text" id="proxyUser" placeholder="Username (optional)">
+            <input type="password" id="proxyPass" placeholder="Password (optional)">
+            <button class="btn gradient" id="btnAddProxy">Add Proxy</button>
+          </div>
+          <button class="btn" id="btnBulkImport" style="margin-top:10px">📋 Bulk Import</button>
+        </div>
+        <div class="proxy-list glass-card">
+          <h3>Proxy List</h3>
+          <div class="proxy-table-wrap">
+            <table class="proxy-table" id="proxyTable"><thead><tr><th>Host</th><th>Port</th><th>Protocol</th><th>Status</th><th>Latency</th><th>Location</th><th>Actions</th></tr></thead><tbody id="proxyTableBody"><tr><td colspan="7" class="empty-row">No proxies configured</td></tr></tbody></table>
+          </div>
+          <div class="proxy-actions"><button class="btn" id="btnTestAll">🔍 Test All</button><button class="btn" id="btnDnsTest">🛡️ DNS Leak Test</button><button class="btn" id="btnWebrtcTest">📡 WebRTC Leak Test</button></div>
+        </div>
+      </section>
+
+      <!-- TAB: Monitoring -->
+      <section class="tab-content" id="tab-monitoring">
+        <div class="tab-header"><h2>Monitoring</h2><p>Real-time fingerprinting attempt tracking</p></div>
+        <div class="monitoring-stats glass-card">
+          <div class="ms-row"><div class="ms-item"><span class="ms-val" id="monTotal">0</span><span class="ms-lbl">Total API Calls</span></div><div class="ms-item"><span class="ms-val" id="monSites">0</span><span class="ms-lbl">Sites Tracked</span></div><div class="ms-item"><span class="ms-val" id="monTrackers">0</span><span class="ms-lbl">Trackers Found</span></div></div>
+        </div>
+        <div class="monitoring-log glass-card">
+          <h3>API Call Log</h3>
+          <div class="log-table-wrap"><table class="log-table"><thead><tr><th>Time</th><th>Site</th><th>API</th><th>Status</th></tr></thead><tbody id="logTableBody"><tr><td colspan="4" class="empty-row">No activity logged yet</td></tr></tbody></table></div>
+          <div class="log-actions"><button class="btn" id="btnExportJson">📥 Export JSON</button><button class="btn" id="btnExportCsv">📥 Export CSV</button><button class="btn danger" id="btnClearLogs">🗑️ Clear Logs</button></div>
+        </div>
+      </section>
+
+      <!-- TAB: FP Test -->
+      <section class="tab-content" id="tab-test">
+        <div class="tab-header"><h2>Fingerprint Test</h2><p>Test your current fingerprint values</p></div>
+        <div class="test-actions"><button class="btn gradient" id="btnRunTest">▶ Run Full Test</button><a href="https://browserleaks.com" target="_blank" class="btn">🔗 BrowserLeaks</a><a href="https://abrahamjuliot.github.io/creepjs/" target="_blank" class="btn">🔗 CreepJS</a></div>
+        <div class="test-results glass-card" id="testResults"><p class="empty-msg">Click "Run Full Test" to begin</p></div>
+      </section>
+
+      <!-- TAB: Whitelist -->
+      <section class="tab-content" id="tab-whitelist">
+        <div class="tab-header"><h2>Whitelist / Blacklist</h2><p>Manage per-site spoofing rules</p></div>
+        <div class="wl-grid">
+          <div class="wl-section glass-card">
+            <h3>✅ Whitelist <span class="wl-note">(Spoofing disabled)</span></h3>
+            <div class="wl-add"><input type="text" id="wlInput" placeholder="e.g. *.google.com"><button class="btn" id="btnAddWl">Add</button></div>
+            <ul class="wl-list" id="whitelistList"></ul>
+          </div>
+          <div class="wl-section glass-card">
+            <h3>🚫 Blacklist <span class="wl-note">(Extra-aggressive spoofing)</span></h3>
+            <div class="wl-add"><input type="text" id="blInput" placeholder="e.g. tracker.example.com"><button class="btn" id="btnAddBl">Add</button></div>
+            <ul class="wl-list" id="blacklistList"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Automation -->
+      <section class="tab-content" id="tab-automation">
+        <div class="tab-header"><h2>Automation API</h2><p>Control PhantomPrint from external tools</p></div>
+        <div class="auto-section glass-card">
+          <h3>API Configuration</h3>
+          <div class="auto-row"><label>API Enabled:</label><label class="switch"><input type="checkbox" id="apiEnabled"><span class="switch-slider"></span></label></div>
+          <div class="auto-row"><label>API Key:</label><code class="api-key" id="apiKeyDisplay">Not generated</code><button class="btn" id="btnGenKey">Generate New Key</button></div>
+        </div>
+        <div class="auto-section glass-card">
+          <h3>API Reference</h3>
+          <div class="api-docs">
+            <div class="api-endpoint"><code>setProfile(profileId)</code><span>Switch active profile</span></div>
+            <div class="api-endpoint"><code>getFingerprint()</code><span>Get current fingerprint values</span></div>
+            <div class="api-endpoint"><code>randomize()</code><span>Generate new random profile</span></div>
+            <div class="api-endpoint"><code>setProxy(proxy)</code><span>Set proxy configuration</span></div>
+            <div class="api-endpoint"><code>getStats()</code><span>Get monitoring statistics</span></div>
+            <div class="api-endpoint"><code>enable() / disable()</code><span>Toggle spoofing on/off</span></div>
+            <div class="api-endpoint"><code>listProfiles()</code><span>List all saved profiles</span></div>
+            <div class="api-endpoint"><code>exportProfiles()</code><span>Export all profiles as JSON</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Updates -->
+      <section class="tab-content" id="tab-updates">
+        <div class="tab-header"><h2>Updates</h2><p>Keep your fingerprint data up to date</p></div>
+        <div class="update-section glass-card">
+          <div class="update-row"><span>Extension Version:</span><span id="extVersion">2.0.0</span></div>
+          <div class="update-row"><span>Data Version:</span><span id="dataVersion">1.0.0</span></div>
+          <div class="update-row"><span>Last Check:</span><span id="lastCheck">Never</span></div>
+          <button class="btn gradient" id="btnCheckUpdates">🔍 Check for Updates</button>
+          <div class="update-result" id="updateResult"></div>
+        </div>
+        <div class="update-section glass-card">
+          <h3>Auto-Update Settings</h3>
+          <div class="auto-row"><label>Auto-update data:</label><label class="switch"><input type="checkbox" id="autoUpdate" checked><span class="switch-slider"></span></label></div>
+          <div class="auto-row"><label>Check interval:</label><select id="updateInterval"><option value="24">Daily</option><option value="168" selected>Weekly</option><option value="720">Monthly</option></select></div>
+        </div>
+      </section>
+
+      <!-- TAB: Settings -->
+      <section class="tab-content" id="tab-settings">
+        <div class="tab-header"><h2>General Settings</h2><p>Configure global extension behavior</p></div>
+        <div class="settings-section glass-card">
+          <h3>Randomization Frequency</h3>
+          <div class="radio-group" id="randFreq">
+            <label><input type="radio" name="randFreq" value="pageload"> Every page load</label>
+            <label><input type="radio" name="randFreq" value="tab"> Every new tab</label>
+            <label><input type="radio" name="randFreq" value="session" checked> Every session</label>
+            <label><input type="radio" name="randFreq" value="hourly"> Every hour</label>
+            <label><input type="radio" name="randFreq" value="manual"> Manual only</label>
+          </div>
+        </div>
+        <div class="settings-section glass-card">
+          <h3>Seed Management</h3>
+          <div class="auto-row"><label>Current Seed:</label><code id="currentSeed">loading...</code><button class="btn" id="btnRegenSeed">🔄 Regenerate</button></div>
+        </div>
+        <div class="settings-section glass-card">
+          <h3>Isolation</h3>
+          <div class="auto-row"><label>Cross-site isolation:</label><label class="switch"><input type="checkbox" id="crossSiteIso" checked><span class="switch-slider"></span></label></div>
+        </div>
+        <div class="settings-section glass-card">
+          <h3>Data Management</h3>
+          <div class="settings-btns"><button class="btn" id="btnBackup">📤 Export Backup</button><button class="btn" id="btnRestore">📥 Import Backup</button><button class="btn danger" id="btnReset">🗑️ Factory Reset</button></div>
+        </div>
+      </section>
+      <!-- TAB: Privacy Tools -->
+      <section class="tab-content" id="tab-privacy">
+        <div class="tab-header"><h2>🛡️ Privacy Tools</h2><p>Session replay prevention, referrer control, DoH, and link cleaning</p></div>
+        <div class="settings-grid">
+          <div class="settings-section glass-card">
+            <h3>🎬 Session Replay Prevention</h3>
+            <div class="auto-row"><label>Block replay scripts (Hotjar, FullStory, Clarity, etc.):</label><label class="switch"><input type="checkbox" id="replayEnabled"><span class="switch-slider"></span></label></div>
+            <div style="margin-top:10px;font-size:12px;color:var(--text-muted)" id="replayStatus">Loading status…</div>
+            <div id="replaySiteList" style="margin-top:8px;"></div>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>🔗 Link Cleaner</h3>
+            <div class="auto-row"><label>Strip tracking parameters (UTM, fbclid, gclid, etc.):</label><label class="switch"><input type="checkbox" id="linkCleanEnabled" checked><span class="switch-slider"></span></label></div>
+            <div style="margin-top:8px;font-size:12px;color:var(--text-muted)">Links cleaned: <strong id="linkCleanCount">0</strong></div>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>📄 Referrer Control</h3>
+            <div class="form-row"><label class="form-label">Mode:</label><select id="referrerMode" class="form-input">
+              <option value="off">Off (browser default)</option>
+              <option value="no-referrer">No Referrer (strip all)</option>
+              <option value="same-origin">Same-Origin Only</option>
+              <option value="origin-only">Origin Only (no path)</option>
+              <option value="spoofed">Spoofed (custom URL)</option>
+              <option value="smart">Smart (auto)</option>
+            </select></div>
+            <div class="form-row" id="spoofedUrlRow" style="display:none;"><label class="form-label">Spoofed URL:</label><input type="text" class="form-input" id="spoofedUrl" placeholder="https://www.google.com/"></div>
+            <button class="btn" id="btnSetReferrer">Apply Referrer Mode</button>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>🔒 DNS-over-HTTPS</h3>
+            <div class="auto-row"><label>Enable DoH (prevent DNS leaks):</label><label class="switch"><input type="checkbox" id="dohEnabled"><span class="switch-slider"></span></label></div>
+            <div class="form-row"><label class="form-label">Provider:</label><select id="dohProvider" class="form-input">
+              <option value="cloudflare">Cloudflare (1.1.1.1)</option>
+              <option value="google">Google (8.8.8.8)</option>
+              <option value="quad9">Quad9 (9.9.9.9)</option>
+              <option value="nextdns">NextDNS</option>
+              <option value="mullvad">Mullvad</option>
+            </select></div>
+            <button class="btn" id="btnTestDns">🧪 Run DNS Leak Test</button>
+            <div id="dohTestResult" style="margin-top:8px;font-size:12px;color:var(--text-muted);"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Mobile Emulation -->
+      <section class="tab-content" id="tab-mobile">
+        <div class="tab-header"><h2>📱 Mobile Emulation</h2><p>Emulate a specific mobile device across all fingerprinting APIs</p></div>
+        <div class="settings-grid">
+          <div class="settings-section glass-card">
+            <h3>Device Settings</h3>
+            <div class="auto-row"><label>Enable Mobile Emulation:</label><label class="switch"><input type="checkbox" id="mobileEnabled"><span class="switch-slider"></span></label></div>
+            <div class="form-row" style="margin-top:12px;"><label class="form-label">Device Profile:</label>
+              <select id="mobileDevice" class="form-input">
+                <option value="">Random (changes with session)</option>
+                <option value="iPhone 15 Pro Max">iPhone 15 Pro Max (iOS 18.5 Safari)</option>
+                <option value="iPhone 15">iPhone 15 (iOS 18.5 Safari)</option>
+                <option value="iPhone 14">iPhone 14 (iOS 17.6 Safari)</option>
+                <option value="Samsung Galaxy S24 Ultra">Samsung Galaxy S24 Ultra (Android 15 Chrome)</option>
+                <option value="Samsung Galaxy S23">Samsung Galaxy S23 (Android 14 Chrome)</option>
+                <option value="Samsung Galaxy A54">Samsung Galaxy A54 (Android 14 Chrome)</option>
+                <option value="Google Pixel 9 Pro">Google Pixel 9 Pro (Android 15 Chrome)</option>
+                <option value="Google Pixel 8">Google Pixel 8 (Android 14 Chrome)</option>
+                <option value="Xiaomi 14">Xiaomi 14 (Android 14 Chrome)</option>
+                <option value="OnePlus 12">OnePlus 12 (Android 14 Chrome)</option>
+                <option value="iPad Pro 12.9" M4">iPad Pro 12.9" M4 (iPadOS 18.2 Safari)</option>
+                <option value="iPad Air M2">iPad Air M2 (iPadOS 17.6 Safari)</option>
+                <option value="Samsung Galaxy Tab S9 Ultra">Samsung Galaxy Tab S9 Ultra</option>
+              </select>
+            </div>
+            <div class="auto-row"><label>DeviceOrientation events:</label><label class="switch"><input type="checkbox" id="mobileOrientation" checked><span class="switch-slider"></span></label></div>
+            <div class="auto-row"><label>DeviceMotion events:</label><label class="switch"><input type="checkbox" id="mobileMotion" checked><span class="switch-slider"></span></label></div>
+            <button class="btn btn-primary" id="btnApplyMobile" style="margin-top:12px;">Apply Mobile Profile</button>
+          </div>
+          <div class="settings-section glass-card" id="mobileInfoCard">
+            <h3>Device Info</h3>
+            <div id="mobileDeviceInfo" style="font-size:12px;color:var(--text-muted);line-height:1.8;">Select a device profile to see details</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Security -->
+      <section class="tab-content" id="tab-security">
+        <div class="tab-header"><h2>🔒 Security</h2><p>Master password, auto-lock, tamper detection, and panic mode</p></div>
+        <div class="settings-grid">
+          <div class="settings-section glass-card">
+            <h3>🔑 Master Password</h3>
+            <div id="passwordStatus" style="margin-bottom:12px;font-size:12px;color:var(--text-muted);">Checking…</div>
+            <div class="form-row"><label class="form-label">Current Password</label><input type="password" class="form-input" id="pwCurrent" placeholder="Leave blank if none set"></div>
+            <div class="form-row"><label class="form-label">New Password</label><input type="password" class="form-input" id="pwNew" placeholder="New password…"></div>
+            <div class="form-row"><label class="form-label">Confirm Password</label><input type="password" class="form-input" id="pwConfirm" placeholder="Confirm…"></div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn btn-primary" id="btnSetPassword">🔑 Set Password</button>
+              <button class="btn" id="btnRemovePassword">Remove</button>
             </div>
           </div>
-          <div class="card">
-            <div class="card-header">Import / Export</div>
-            <div class="import-export">
-              <button class="btn btn-secondary" id="exportBtn">Export All Settings</button>
-              <div class="file-input-wrap">
-                <button class="btn btn-secondary" id="importBtn">Import Settings</button>
-                <input type="file" id="importFile" accept=".json" hidden>
+          <div class="settings-section glass-card">
+            <h3>⏱️ Auto-Lock</h3>
+            <div class="form-row"><label class="form-label">Lock after:</label>
+              <select class="form-input" id="autoLockMinutes">
+                <option value="0">Disabled</option>
+                <option value="5">5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">1 hour</option>
+              </select>
+            </div>
+            <button class="btn" id="btnSetAutoLock">Apply Auto-Lock</button>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>🔍 Tamper Detection</h3>
+            <button class="btn" id="btnCheckIntegrity">Check File Integrity</button>
+            <div id="integrityResult" style="margin-top:10px;font-size:12px;line-height:1.7;"></div>
+          </div>
+          <div class="settings-section glass-card" style="border: 1px solid rgba(255,82,82,0.3);">
+            <h3 style="color:#FF5252;">🚨 Panic Button</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Instantly wipe ALL extension data: profiles, settings, cookies, storage, DNR rules. Irreversible.</p>
+            <button class="btn danger" id="btnPanic" style="background: linear-gradient(135deg,#FF5252,#B71C1C);border:none;color:#fff;font-weight:700;padding:10px 20px;">💥 PANIC — Wipe Everything</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Data & Sync -->
+      <section class="tab-content" id="tab-sync">
+        <div class="tab-header"><h2>☁️ Data & Sync</h2><p>Cloud sync, import/export, and profile cloning</p></div>
+        <div class="settings-grid">
+          <div class="settings-section glass-card">
+            <h3>☁️ Cloud Sync</h3>
+            <div class="form-row"><label class="form-label">Sync Password</label><input type="password" class="form-input" id="syncPassword" placeholder="Encryption password…"></div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="btnSyncPush">⬆️ Push to Cloud</button>
+              <button class="btn" id="btnSyncPull">⬇️ Pull from Cloud</button>
+            </div>
+            <div class="auto-row" style="margin-top:12px;"><label>Auto-sync every:</label>
+              <select class="form-input" style="width:140px;" id="syncInterval">
+                <option value="0">Disabled</option>
+                <option value="60">1 hour</option>
+                <option value="360">6 hours</option>
+                <option value="1440">Daily</option>
+                <option value="10080">Weekly</option>
+              </select>
+            </div>
+            <div id="syncStatus" style="margin-top:8px;font-size:12px;color:var(--text-muted);"></div>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>📤 Export Profiles</h3>
+            <div class="form-row"><label class="form-label">Format</label>
+              <select class="form-input" id="exportFormat">
+                <option value="json">PhantomPrint JSON</option>
+                <option value="encrypted">Encrypted (.phantomprint)</option>
+                <option value="gologin">GoLogin JSON</option>
+                <option value="multilogin">Multilogin .mlx</option>
+                <option value="csv">CSV</option>
+                <option value="proxylist">Proxy List</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btnExport">📤 Export & Download</button>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>📥 Import Profiles</h3>
+            <div class="form-row"><label class="form-label">Format</label>
+              <select class="form-input" id="importFormat">
+                <option value="json">PhantomPrint JSON</option>
+                <option value="encrypted">Encrypted</option>
+                <option value="gologin">GoLogin JSON</option>
+                <option value="multilogin">Multilogin .mlx</option>
+                <option value="csv">CSV</option>
+              </select>
+            </div>
+            <input type="file" id="importFile" accept=".json,.csv,.phantomprint,.mlx" style="color:var(--text-muted);font-size:12px;margin-bottom:8px;">
+            <button class="btn btn-primary" id="btnImportFile">📥 Import</button>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>🔁 Clone Profile</h3>
+            <div class="form-row"><label class="form-label">Profile to Clone</label><input type="text" class="form-input" id="cloneProfileName" placeholder="Profile name…"></div>
+            <div class="form-row"><label class="form-label">Number of Clones</label><input type="number" class="form-input" id="cloneCount" value="1" min="1" max="50"></div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;"><input type="checkbox" id="cloneChangeBrowser"> Change Browser</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;"><input type="checkbox" id="cloneChangeOS"> Change OS</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;"><input type="checkbox" id="cloneChangeGPU"> Change GPU</label>
+            </div>
+            <button class="btn btn-primary" id="btnClone">🔁 Clone</button>
+            <div id="cloneResult" style="margin-top:8px;font-size:12px;color:var(--text-muted);"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: Network -->
+      <section class="tab-content" id="tab-network">
+        <div class="tab-header"><h2>📡 Network Interceptor</h2><p>HTTP header rules, privacy headers, and request logging</p></div>
+        <div class="settings-grid">
+          <div class="settings-section glass-card">
+            <h3>Privacy Headers</h3>
+            <div class="auto-row"><label>Enable privacy header rules (DNT, Sec-GPC, strip tracking headers):</label><label class="switch"><input type="checkbox" id="netPrivacyEnabled" checked><span class="switch-slider"></span></label></div>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Removes: X-Forwarded-For, X-Real-IP, Via, ETag, X-Request-ID, Server<br>Adds: DNT=1, Sec-GPC=1</p>
+          </div>
+          <div class="settings-section glass-card">
+            <h3>Add Custom Header Rule</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="form-row"><label class="form-label">URL Pattern</label><input type="text" class="form-input" id="ruleUrlPattern" placeholder="*://example.com/*"></div>
+              <div class="form-row"><label class="form-label">Header Name</label><input type="text" class="form-input" id="ruleHeaderName" placeholder="X-Custom-Header"></div>
+              <div class="form-row"><label class="form-label">Header Value</label><input type="text" class="form-input" id="ruleHeaderValue" placeholder="custom-value (blank = remove)"></div>
+              <div class="form-row"><label class="form-label">Type</label>
+                <select class="form-input" id="ruleHeaderType">
+                  <option value="request">Request Header</option>
+                  <option value="response">Response Header</option>
+                </select>
               </div>
             </div>
+            <button class="btn btn-primary" id="btnAddHeaderRule" style="margin-top:8px;">+ Add Rule</button>
+          </div>
+          <div class="settings-section glass-card" style="grid-column:1/-1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <h3 style="margin:0;">Request Log <span id="logCount" style="font-size:11px;color:var(--text-muted);"></span></h3>
+              <div style="display:flex;gap:8px;">
+                <button class="btn" id="btnClearLogs">🗑️ Clear</button>
+                <button class="btn" id="btnExportHAR">📤 Export HAR</button>
+              </div>
+            </div>
+            <div id="requestLog" style="max-height:300px;overflow-y:auto;font-size:11px;font-family:monospace;"></div>
           </div>
         </div>
       </section>
 
-      <!-- Whitelist Section -->
-      <section class="section" id="section-whitelist">
-        <h2>Site Whitelist</h2>
-        <p class="section-desc">Sites in the whitelist will not have fingerprint spoofing applied.</p>
-        <div class="card">
-          <div class="whitelist-add">
-            <input type="text" id="whitelistInput" placeholder="Enter domain (e.g., example.com)" class="input">
-            <button class="btn btn-primary" id="addWhitelistBtn">Add</button>
-          </div>
-          <div class="whitelist-list" id="whitelistList"></div>
-        </div>
-      </section>
-
-      <!-- Randomization Section -->
-      <section class="section" id="section-randomization">
-        <h2>Randomization Settings</h2>
-        <div class="card">
-          <div class="card-header">Randomize Fingerprint On</div>
-          <div class="radio-group" id="randomizeOnGroup">
-            <label class="radio-item"><input type="radio" name="randomizeOn" value="pageload"> Every Page Load</label>
-            <label class="radio-item"><input type="radio" name="randomizeOn" value="session" checked> Every Browser Session</label>
-            <label class="radio-item"><input type="radio" name="randomizeOn" value="hourly"> Every Hour</label>
-            <label class="radio-item"><input type="radio" name="randomizeOn" value="manual"> Manual Only</label>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Cross-Site Isolation</div>
-          <p class="card-desc">When enabled, each website gets a unique fingerprint, preventing cross-site tracking.</p>
-          <label class="toggle-row">
-            <span>Enable Cross-Site Isolation</span>
-            <label class="switch"><input type="checkbox" id="crossSiteToggle" checked><span class="slider"></span></label>
-          </label>
-        </div>
-        <div class="card">
-          <div class="card-header">WebRTC Mode</div>
-          <div class="radio-group">
-            <label class="radio-item"><input type="radio" name="webrtcMode" value="ip_only" checked> Strip Local IPs Only</label>
-            <label class="radio-item"><input type="radio" name="webrtcMode" value="full_block"> Block WebRTC Entirely</label>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Session Seed</div>
-          <p class="card-desc">Current seed used for deterministic fingerprint generation.</p>
-          <div class="seed-display">
-            <code id="currentSeed">--</code>
-            <button class="btn btn-small" id="regenerateSeed">Regenerate</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Logs Section -->
-      <section class="section" id="section-logs">
-        <h2>Fingerprinting Logs</h2>
-        <div class="logs-controls">
-          <button class="btn btn-danger" id="clearLogsBtn">Clear Logs</button>
-        </div>
-        <div class="card">
-          <div class="logs-table" id="logsTable">
-            <div class="log-header"><span>Time</span><span>Site</span><span>API</span></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- About Section -->
-      <section class="section" id="section-about">
-        <h2>About PhantomPrint</h2>
-        <div class="card">
-          <p><strong>Version:</strong> 1.0.0</p>
-          <p><strong>License:</strong> MIT</p>
-          <br>
-          <p>PhantomPrint protects against browser fingerprinting by spoofing, randomizing, and blocking over 200 fingerprinting parameters across 20 categories.</p>
-          <br>
-          <p><strong>Features:</strong></p>
-          <ul class="about-list">
-            <li>Deterministic per-site fingerprints (cross-site unlinkability)</li>
-            <li>Consistent spoofed values that pass detection tests</li>
-            <li>Profile management (save/load/import/export)</li>
-            <li>Per-site whitelist support</li>
-            <li>Anti-detection measures (native function signatures, prototype chain preservation)</li>
-          </ul>
-        </div>
-      </section>
     </main>
   </div>
   <script src="options.js"></script>

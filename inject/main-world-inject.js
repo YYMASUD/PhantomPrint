@@ -3,6 +3,7 @@
 // It coordinates all spoofing modules with a consistent fingerprint profile
 (function() {
   'use strict';
+  try { // Global error boundary for inject script
 
   // =========================================================================
   // PRNG - Seeded pseudo-random number generator (xoshiro128**)
@@ -142,50 +143,128 @@
     'Asia/Tokyo':540,'Asia/Seoul':540,'Asia/Shanghai':480,'Australia/Sydney':660
   };
 
-  function generateProfile(rng) {
+  function generateProfile(rng, config) {
     const profile = {};
+    const dm = config?.__dataModules__ || null;
+    const statData = dm?.statData || null;
+    const amiuniqueData = dm?.amiuniqueData || null;
+    const webglData = dm?.webglData || null;
+    const uaData = dm?.uaData || null;
+
+    // Weighted pick helper for {key: weight} objects
+    const weightedPick = (obj) => {
+      const entries = Object.entries(obj).filter(([k]) => k !== 'other');
+      const total = entries.reduce((sum, [, w]) => sum + w, 0);
+      let roll = rng.next() * total;
+      for (const [key, weight] of entries) {
+        roll -= weight;
+        if (roll <= 0) return key;
+      }
+      return entries[entries.length - 1]?.[0] || entries[0]?.[0];
+    };
     
-    // OS and Browser selection
+    // OS and Browser selection (data-driven via StatCounter)
     const osChoice = rng.next();
-    if (osChoice < 0.45) {
-      profile.os = 'Windows'; profile.osVersion = rng.pick(['10.0','11.0']);
-      profile.platform = 'Win32'; profile.arch = 'x86'; profile.mobile = false;
-    } else if (osChoice < 0.7) {
-      profile.os = 'macOS'; profile.osVersion = rng.pick(['13.6','14.1','14.2']);
-      profile.platform = 'MacIntel'; profile.arch = 'arm'; profile.mobile = false;
-    } else if (osChoice < 0.8) {
-      profile.os = 'Linux'; profile.osVersion = rng.pick(['6.1','6.5','6.6']);
-      profile.platform = 'Linux x86_64'; profile.arch = 'x86'; profile.mobile = false;
-    } else if (osChoice < 0.92) {
-      profile.os = 'Android'; profile.osVersion = rng.pick(['12','13','14']);
-      profile.platform = 'Linux armv8l'; profile.arch = 'arm'; profile.mobile = true;
-      profile.model = rng.pick(['Pixel 8','Pixel 7 Pro','SM-S918B','SM-A546B','SM-G991B']);
+    if (statData?.desktopOsShare) {
+      // Use desktop vs mobile split
+      const isMobileRoll = rng.next();
+      if (isMobileRoll < 0.45) {
+        // Desktop
+        const desktopOS = weightedPick(statData.desktopOsShare);
+        if (desktopOS === 'windows') {
+          profile.os = 'Windows'; profile.osVersion = rng.pick(['10.0','11.0']);
+          profile.platform = 'Win32'; profile.arch = 'x86'; profile.mobile = false;
+        } else if (desktopOS === 'macos') {
+          profile.os = 'macOS'; profile.osVersion = rng.pick(['14.2','14.5','15.1']);
+          profile.platform = 'MacIntel'; profile.arch = 'arm'; profile.mobile = false;
+        } else {
+          profile.os = 'Linux'; profile.osVersion = rng.pick(['6.1','6.5','6.8']);
+          profile.platform = 'Linux x86_64'; profile.arch = 'x86'; profile.mobile = false;
+        }
+      } else if (isMobileRoll < 0.85) {
+        // Mobile
+        if (rng.next() < (statData.osShare?.android / ((statData.osShare?.android || 0.41) + (statData.osShare?.ios || 0.18)))) {
+          profile.os = 'Android'; profile.osVersion = rng.pick(['13','14','15']);
+          profile.platform = 'Linux armv8l'; profile.arch = 'arm'; profile.mobile = true;
+          profile.model = rng.pick(['Pixel 9 Pro','Pixel 8','SM-S928B','SM-S926B','SM-A556B','SM-A356B','2401116SG']);
+        } else {
+          profile.os = 'iOS'; profile.osVersion = rng.pick(['17.5','17.6','18.1','18.2','18.3','18.4']);
+          profile.platform = 'iPhone'; profile.arch = 'arm'; profile.mobile = true;
+          profile.model = 'iPhone';
+        }
+      } else {
+        // Tablet
+        if (rng.next() < 0.6) {
+          profile.os = 'iOS'; profile.osVersion = rng.pick(['17.5','17.6','18.2','18.3','18.4']);
+          profile.platform = 'iPad'; profile.arch = 'arm'; profile.mobile = true; profile.tablet = true;
+          profile.model = 'iPad';
+        } else {
+          profile.os = 'Android'; profile.osVersion = rng.pick(['13','14']);
+          profile.platform = 'Linux armv8l'; profile.arch = 'arm'; profile.mobile = true; profile.tablet = true;
+          profile.model = rng.pick(['SM-X810','SM-X710','SM-X210']);
+        }
+      }
     } else {
-      profile.os = 'iOS'; profile.osVersion = rng.pick(['16.7','17.1','17.2','17.3']);
-      profile.platform = 'iPhone'; profile.arch = 'arm'; profile.mobile = true;
-      profile.model = 'iPhone';
+      // Fallback: hardcoded ratios
+      if (osChoice < 0.45) {
+        profile.os = 'Windows'; profile.osVersion = rng.pick(['10.0','11.0']);
+        profile.platform = 'Win32'; profile.arch = 'x86'; profile.mobile = false;
+      } else if (osChoice < 0.7) {
+        profile.os = 'macOS'; profile.osVersion = rng.pick(['14.2','14.5','15.1']);
+        profile.platform = 'MacIntel'; profile.arch = 'arm'; profile.mobile = false;
+      } else if (osChoice < 0.8) {
+        profile.os = 'Linux'; profile.osVersion = rng.pick(['6.1','6.5','6.8']);
+        profile.platform = 'Linux x86_64'; profile.arch = 'x86'; profile.mobile = false;
+      } else if (osChoice < 0.92) {
+        profile.os = 'Android'; profile.osVersion = rng.pick(['13','14','15']);
+        profile.platform = 'Linux armv8l'; profile.arch = 'arm'; profile.mobile = true;
+        profile.model = rng.pick(['Pixel 8','Pixel 9 Pro','SM-S928B','SM-A556B','SM-G991B']);
+      } else {
+        profile.os = 'iOS'; profile.osVersion = rng.pick(['17.5','17.6','18.3','18.4']);
+        profile.platform = 'iPhone'; profile.arch = 'arm'; profile.mobile = true;
+        profile.model = 'iPhone';
+      }
     }
     profile.bitness = '64';
 
-    // Browser for OS
-    if (profile.os === 'Windows') {
-      const b = rng.next();
-      profile.browser = b < 0.65 ? 'Chrome' : b < 0.85 ? 'Edge' : 'Firefox';
-    } else if (profile.os === 'macOS') {
-      const b = rng.next();
-      profile.browser = b < 0.4 ? 'Safari' : b < 0.8 ? 'Chrome' : 'Firefox';
-    } else if (profile.os === 'Linux') {
-      profile.browser = rng.next() < 0.55 ? 'Chrome' : 'Firefox';
-    } else if (profile.os === 'Android') {
-      profile.browser = rng.next() < 0.9 ? 'Chrome' : 'Firefox';
+    // Browser for OS (data-driven via StatCounter browser share)
+    if (statData?.browserShare) {
+      const osFilters = {
+        'Windows': ['chrome','edge','firefox','opera','brave'],
+        'macOS': ['chrome','safari','firefox','edge','opera'],
+        'Linux': ['chrome','firefox','opera','brave'],
+        'Android': ['chrome','samsung_internet','firefox','edge'],
+        'iOS': ['safari','chrome','firefox']
+      };
+      const allowed = osFilters[profile.os] || ['chrome'];
+      const filtered = {};
+      for (const b of allowed) {
+        if (statData.browserShare[b]) filtered[b] = statData.browserShare[b];
+      }
+      const browserKey = Object.keys(filtered).length > 0 ? weightedPick(filtered) : 'chrome';
+      const browserMap = {'chrome':'Chrome','edge':'Edge','firefox':'Firefox','safari':'Safari','opera':'Opera','brave':'Brave','samsung_internet':'Samsung Internet'};
+      profile.browser = browserMap[browserKey] || 'Chrome';
     } else {
-      profile.browser = rng.next() < 0.7 ? 'Safari' : 'Chrome';
+      if (profile.os === 'Windows') {
+        const b = rng.next();
+        profile.browser = b < 0.65 ? 'Chrome' : b < 0.85 ? 'Edge' : 'Firefox';
+      } else if (profile.os === 'macOS') {
+        const b = rng.next();
+        profile.browser = b < 0.4 ? 'Safari' : b < 0.8 ? 'Chrome' : 'Firefox';
+      } else if (profile.os === 'Linux') {
+        profile.browser = rng.next() < 0.55 ? 'Chrome' : 'Firefox';
+      } else if (profile.os === 'Android') {
+        profile.browser = rng.next() < 0.9 ? 'Chrome' : 'Firefox';
+      } else {
+        profile.browser = rng.next() < 0.7 ? 'Safari' : 'Chrome';
+      }
     }
 
-    const chromeVer = rng.pick(['119.0.0.0','120.0.0.0','121.0.0.0','122.0.0.0']);
-    const ffVer = rng.pick(['119.0','120.0','121.0','122.0']);
-    const safariVer = rng.pick(['16.7','17.0','17.1','17.2']);
-    const edgeVer = rng.pick(['119.0.0.0','120.0.0.0','121.0.0.0','122.0.0.0']);
+    // Version strings (CURRENT as of 2025)
+    const chromeVer = rng.pick(['136.0.7103.49','135.0.7049.95','134.0.6998.89','133.0.6943.141','132.0.6834.110','131.0.6778.140','130.0.6723.91']);
+    const ffVer = rng.pick(['138.0','137.0','136.0','135.0','134.0','133.0','132.0','128.0']);
+    const safariVer = rng.pick(['18.4','18.3','18.2','18.1','17.6','17.5','17.4','17.3']);
+    const edgeVer = rng.pick(['136.0.3240.50','135.0.3179.73','134.0.3124.85','133.0.3065.92']);
 
     if (profile.browser === 'Chrome') {
       profile.browserVersion = chromeVer; profile.vendor = 'Google Inc.';
@@ -266,38 +345,90 @@
     profile.maxTouchPoints = profile.mobile ? rng.pick([5,10]) : 0;
     profile.touchEnabled = profile.maxTouchPoints > 0;
 
-    // GPU
-    if (profile.os === 'Windows') {
-      const gpus = [
-        {v:'Google Inc. (NVIDIA)',r:'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)'},
-        {v:'Google Inc. (NVIDIA)',r:'ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)'},
-        {v:'Google Inc. (NVIDIA)',r:'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)'},
-        {v:'Google Inc. (AMD)',r:'ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)'},
-        {v:'Google Inc. (AMD)',r:'ANGLE (AMD, AMD Radeon RX 6700 XT Direct3D11 vs_5_0 ps_5_0, D3D11)'},
-        {v:'Google Inc. (Intel)',r:'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)'},
-        {v:'Google Inc. (Intel)',r:'ANGLE (Intel, Intel(R) Iris Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)'}
-      ];
-      const g = rng.pick(gpus); profile.gpuVendor = g.v; profile.gpu = g.r;
-    } else if (profile.os === 'macOS') {
-      if (profile.browser === 'Safari') { profile.gpuVendor = 'Apple GPU'; profile.gpu = 'Apple GPU'; }
-      else { const chips = ['Apple M1','Apple M1 Pro','Apple M2','Apple M2 Pro','Apple M3'];
-        const c = rng.pick(chips); profile.gpuVendor = 'Google Inc. (Apple)'; profile.gpu = `ANGLE (Apple, ANGLE Metal Renderer: ${c}, Unspecified Version)`; }
-    } else if (profile.os === 'Linux') {
-      const gpus = [
-        {v:'Google Inc. (NVIDIA)',r:'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060, OpenGL 4.6)'},
-        {v:'Google Inc. (AMD)',r:'ANGLE (AMD, AMD Radeon RX 6700 XT, OpenGL 4.6)'},
-        {v:'Google Inc. (Mesa)',r:'ANGLE (Mesa, Mesa Intel(R) UHD Graphics 630 (CFL GT2), OpenGL 4.6)'}
-      ];
-      const g = rng.pick(gpus); profile.gpuVendor = g.v; profile.gpu = g.r;
-    } else if (profile.os === 'Android') {
-      const gpus = [{v:'Qualcomm',r:'Adreno (TM) 740'},{v:'Qualcomm',r:'Adreno (TM) 730'},{v:'ARM',r:'Mali-G715'},{v:'ARM',r:'Mali-G78'}];
-      const g = rng.pick(gpus); profile.gpuVendor = g.v; profile.gpu = g.r;
+    // GPU — data-driven from WebGL profiles database
+    if (webglData?.profiles) {
+      const osKeyMap = {'Windows':'windows','macOS':'macos','Linux':'linux','Android':'android','iOS':'ios'};
+      const browserKeyMap = {'Chrome':'chrome','Firefox':'firefox','Safari':'safari','Edge':'chrome','Opera':'chrome','Brave':'chrome','Samsung Internet':'chrome'};
+      const osKey = osKeyMap[profile.os] || 'windows';
+      const browserKey = browserKeyMap[profile.browser] || 'chrome';
+      // Filter profiles matching OS and browser
+      let gpuPool = webglData.profiles.filter(p => p.os === osKey && p.browser === browserKey);
+      if (gpuPool.length === 0) gpuPool = webglData.profiles.filter(p => p.os === osKey);
+      if (gpuPool.length === 0) gpuPool = webglData.profiles;
+      // Weighted pick
+      const totalW = gpuPool.reduce((s, p) => s + (p.weight || 0.01), 0);
+      let roll = rng.next() * totalW;
+      let gpuProfile = gpuPool[0];
+      for (const p of gpuPool) {
+        roll -= (p.weight || 0.01);
+        if (roll <= 0) { gpuProfile = p; break; }
+      }
+      profile.gpuVendor = gpuProfile.vendor || gpuProfile.unmaskedVendor;
+      profile.gpu = gpuProfile.renderer || gpuProfile.unmaskedRenderer;
+      // Store full WebGL params from profile
+      profile.webglParams = {
+        maxTextureSize: gpuProfile.maxTextureSize, maxViewportDims: gpuProfile.maxViewportDims,
+        maxRenderbufferSize: gpuProfile.maxRenderbufferSize, maxVertexAttribs: gpuProfile.maxVertexAttribs,
+        maxVertexUniformVectors: gpuProfile.maxVertexUniformVectors, maxFragmentUniformVectors: gpuProfile.maxFragmentUniformVectors,
+        maxVaryingVectors: gpuProfile.maxVaryingVectors, maxCombinedTextureUnits: gpuProfile.maxCombinedTextureUnits,
+        maxCubeMapTextureSize: gpuProfile.maxCubeMapTextureSize,
+        aliasedLineWidthRange: gpuProfile.aliasedLineWidthRange, aliasedPointSizeRange: gpuProfile.aliasedPointSizeRange,
+        depthBits: gpuProfile.depthBits, stencilBits: gpuProfile.stencilBits, samples: gpuProfile.maxSamples,
+        redBits: gpuProfile.redBits, greenBits: gpuProfile.greenBits, blueBits: gpuProfile.blueBits, alphaBits: gpuProfile.alphaBits,
+        maxSamples: gpuProfile.maxSamples,
+        max3dTextureSize: gpuProfile.webgl2Params?.max3dTextureSize || 8192,
+        maxArrayTextureLayers: gpuProfile.webgl2Params?.maxArrayTextureLayers || 2048,
+        maxDrawBuffers: gpuProfile.webgl2Params?.maxDrawBuffers || 8,
+        maxColorAttachments: gpuProfile.webgl2Params?.maxColorAttachments || 8
+      };
+      profile.webglExtensions = gpuProfile.extensions;
+      profile.webgl2Extensions = gpuProfile.webgl2Extensions;
+      profile.shaderPrecision = gpuProfile.shaderPrecision;
+      profile.webglVersion = gpuProfile.webglVersion;
+      profile.webgl2Version = gpuProfile.webgl2Version;
     } else {
-      profile.gpuVendor = 'Apple Inc.'; profile.gpu = 'Apple GPU';
+      // Fallback: hardcoded GPUs
+      if (profile.os === 'Windows') {
+        const gpus = [
+          {v:'Google Inc. (NVIDIA)',r:'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)'},
+          {v:'Google Inc. (NVIDIA)',r:'ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)'},
+          {v:'Google Inc. (NVIDIA)',r:'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)'},
+          {v:'Google Inc. (AMD)',r:'ANGLE (AMD, AMD Radeon RX 6800 XT Direct3D11 vs_5_0 ps_5_0, D3D11)'},
+          {v:'Google Inc. (Intel)',r:'ANGLE (Intel, Intel(R) UHD Graphics 770 Direct3D11 vs_5_0 ps_5_0, D3D11)'},
+          {v:'Google Inc. (Intel)',r:'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)'}
+        ];
+        const g = rng.pick(gpus); profile.gpuVendor = g.v; profile.gpu = g.r;
+      } else if (profile.os === 'macOS') {
+        if (profile.browser === 'Safari') { profile.gpuVendor = 'Apple Inc.'; profile.gpu = 'Apple GPU'; }
+        else { const chips = ['Apple M1','Apple M2','Apple M3'];
+          const c = rng.pick(chips); profile.gpuVendor = 'Google Inc. (Apple)'; profile.gpu = `ANGLE (Apple, ANGLE Metal Renderer: ${c}, Unspecified Version)`; }
+      } else if (profile.os === 'Linux') {
+        const gpus = [
+          {v:'Google Inc. (NVIDIA Corporation)',r:'ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3060/PCIe/SSE2, OpenGL 4.6)'},
+          {v:'Google Inc. (AMD)',r:'ANGLE (AMD, AMD Radeon RX 6800 XT, OpenGL 4.6)'}
+        ];
+        const g = rng.pick(gpus); profile.gpuVendor = g.v; profile.gpu = g.r;
+      } else if (profile.os === 'Android') {
+        const gpus = [{v:'Qualcomm',r:'Adreno (TM) 740'},{v:'Qualcomm',r:'Adreno (TM) 660'},{v:'ARM',r:'Mali-G715'},{v:'ARM',r:'Mali-G78'}];
+        const g = rng.pick(gpus); profile.gpuVendor = g.v; profile.gpu = g.r;
+      } else {
+        profile.gpuVendor = 'Apple Inc.'; profile.gpu = 'Apple GPU';
+      }
     }
 
-    // Language & Timezone
-    profile.language = rng.pick(LANGUAGES);
+    // Language & Timezone (data-driven from AmIUnique distributions)
+    if (amiuniqueData?.language) {
+      const langEntries = Object.entries(amiuniqueData.language).filter(([k]) => k !== 'other');
+      const langTotal = langEntries.reduce((s, [, w]) => s + w, 0);
+      let langRoll = rng.next() * langTotal;
+      profile.language = 'en-US';
+      for (const [lang, w] of langEntries) {
+        langRoll -= w;
+        if (langRoll <= 0) { profile.language = lang; break; }
+      }
+    } else {
+      profile.language = rng.pick(LANGUAGES);
+    }
     const tzPool = TIMEZONE_MAP[profile.language] || ['America/New_York'];
     profile.timezone = rng.pick(tzPool);
     profile.timezoneOffset = TIMEZONE_OFFSETS[profile.timezone] || 0;
@@ -323,22 +454,24 @@
     profile.colorGamut = rng.pick(['srgb','srgb','p3']);
     profile.dynamicRange = rng.next() < 0.3;
 
-    // WebGL params
-    const isHighEnd = profile.deviceMemory >= 16;
-    profile.webglParams = {
-      maxTextureSize: isHighEnd ? rng.pick([16384, 32768]) : rng.pick([8192, 16384]),
-      maxViewportDims: isHighEnd ? [32768, 32768] : [16384, 16384],
-      maxRenderbufferSize: isHighEnd ? 32768 : 16384,
-      maxVertexAttribs: 16, maxVertexUniformVectors: rng.pick([256, 1024, 4096]),
-      maxFragmentUniformVectors: rng.pick([256, 1024]), maxVaryingVectors: rng.pick([15, 16, 30, 31]),
-      maxCombinedTextureUnits: rng.pick([32, 48, 80]), maxCubeMapTextureSize: isHighEnd ? 16384 : 8192,
-      aliasedLineWidthRange: rng.pick([[1, 1], [1, 7.375]]),
-      aliasedPointSizeRange: rng.pick([[1, 1024], [1, 8192]]),
-      depthBits: 24, stencilBits: 8, samples: 4,
-      redBits: 8, greenBits: 8, blueBits: 8, alphaBits: 8,
-      max3dTextureSize: isHighEnd ? 16384 : 8192, maxArrayTextureLayers: rng.pick([256, 512, 2048]),
-      maxDrawBuffers: rng.pick([4, 8]), maxColorAttachments: rng.pick([4, 8]), maxSamples: rng.pick([4, 8, 16])
-    };
+    // WebGL params (fallback if not already set by data-driven GPU profile)
+    if (!profile.webglParams) {
+      const isHighEnd = profile.deviceMemory >= 16;
+      profile.webglParams = {
+        maxTextureSize: isHighEnd ? rng.pick([16384, 32768]) : rng.pick([8192, 16384]),
+        maxViewportDims: isHighEnd ? [32768, 32768] : [16384, 16384],
+        maxRenderbufferSize: isHighEnd ? 32768 : 16384,
+        maxVertexAttribs: 16, maxVertexUniformVectors: rng.pick([256, 1024, 4096]),
+        maxFragmentUniformVectors: rng.pick([256, 1024]), maxVaryingVectors: rng.pick([15, 16, 30, 31]),
+        maxCombinedTextureUnits: rng.pick([32, 48, 80]), maxCubeMapTextureSize: isHighEnd ? 16384 : 8192,
+        aliasedLineWidthRange: rng.pick([[1, 1], [1, 7.375]]),
+        aliasedPointSizeRange: rng.pick([[1, 1024], [1, 8192]]),
+        depthBits: 24, stencilBits: 8, samples: 4,
+        redBits: 8, greenBits: 8, blueBits: 8, alphaBits: 8,
+        max3dTextureSize: isHighEnd ? 16384 : 8192, maxArrayTextureLayers: rng.pick([256, 512, 2048]),
+        maxDrawBuffers: rng.pick([4, 8]), maxColorAttachments: rng.pick([4, 8]), maxSamples: rng.pick([4, 8, 16])
+      };
+    }
 
     // Audio
     profile.audioParams = { sampleRate: rng.pick([44100, 48000]), maxChannelCount: rng.pick([2, 6, 8]), channelCount: 2, baseLatency: rng.nextFloat(0.005, 0.02), outputLatency: rng.nextFloat(0.001, 0.01) };
@@ -817,6 +950,140 @@
         window.chrome.runtime.connect = undefined;
       }
     } catch(e) {}
+
+    // ===== NOTIFICATION PERMISSION SPOOF =====
+    // Sites probe Notification.permission to narrow user identity
+    try {
+      if (typeof Notification !== 'undefined') {
+        Object.defineProperty(Notification, 'permission', {
+          get: makeNative(function() { return 'default'; }, 'get permission'),
+          configurable: false, enumerable: true
+        });
+        Notification.requestPermission = makeNative(function requestPermission(cb) {
+          const p = Promise.resolve('default');
+          if (typeof cb === 'function') cb('default');
+          return p;
+        }, 'requestPermission');
+      }
+    } catch(e) {}
+
+    // ===== SHARED ARRAY BUFFER DETECTION =====
+    // Sites check typeof SharedArrayBuffer to detect COOP/COEP headers
+    try {
+      if (typeof SharedArrayBuffer !== 'undefined') {
+        // Leave it available — hiding it on a page that has COOP/COEP looks suspicious
+      } else {
+        // Normalize: consistently report as undefined
+        Object.defineProperty(window, 'SharedArrayBuffer', {
+          value: undefined, configurable: false, enumerable: false, writable: false
+        });
+      }
+    } catch(e) {}
+
+    // ===== CHROME.LOADTIMES() =====
+    // Chrome-only timing oracle that leaks connection info
+    try {
+      if (window.chrome && window.chrome.loadTimes) {
+        const now = Date.now() / 1000;
+        window.chrome.loadTimes = makeNative(function loadTimes() {
+          return {
+            commitLoadTime: now, connectionInfo: 'h2',
+            finishDocumentLoadTime: now + 0.1, finishLoadTime: now + 0.2,
+            firstPaintAfterLoadTime: now + 0.05, firstPaintTime: now + 0.04,
+            navigationType: 'Other', npnNegotiatedProtocol: 'h2',
+            requestTime: now - 0.1, startLoadTime: now - 0.05,
+            wasAlternateProtocolAvailable: false,
+            wasFetchedViaSpdy: true, wasNpnNegotiated: true
+          };
+        }, 'loadTimes');
+      }
+      // Also spoof chrome.csi() if present
+      if (window.chrome && window.chrome.csi) {
+        window.chrome.csi = makeNative(function csi() {
+          return { onloadT: Date.now(), pageT: performance.now(), startE: Date.now(), tran: 15 };
+        }, 'csi');
+      }
+    } catch(e) {}
+
+    // ===== KEYBOARD LAYOUT API =====
+    // navigator.keyboard.getLayoutMap() reveals user's keyboard locale
+    try {
+      if (navigator.keyboard) {
+        const emptyMap = new Map();
+        emptyMap.get = makeNative(function get() { return undefined; }, 'get');
+        emptyMap.has = makeNative(function has() { return false; }, 'has');
+        emptyMap.forEach = makeNative(function forEach() {}, 'forEach');
+        emptyMap.entries = makeNative(function entries() { return [][Symbol.iterator](); }, 'entries');
+        emptyMap.keys = makeNative(function keys() { return [][Symbol.iterator](); }, 'keys');
+        emptyMap.values = makeNative(function values() { return [][Symbol.iterator](); }, 'values');
+        Object.defineProperty(emptyMap, 'size', { get: () => 0 });
+        navigator.keyboard.getLayoutMap = makeNative(function getLayoutMap() {
+          return Promise.resolve(emptyMap);
+        }, 'getLayoutMap');
+        navigator.keyboard.lock = makeNative(function lock() { return Promise.resolve(); }, 'lock');
+        navigator.keyboard.unlock = makeNative(function unlock() {}, 'unlock');
+      }
+    } catch(e) {}
+
+    // ===== SERVICE WORKER HIDING =====
+    // ServiceWorker scope can reveal extension fingerprint and browser identity
+    try {
+      if ('serviceWorker' in navigator) {
+        const fakeController = null;
+        const fakeSW = {
+          register: makeNative(function register() { return Promise.reject(new DOMException('SecurityError')); }, 'register'),
+          getRegistration: makeNative(function getRegistration() { return Promise.resolve(undefined); }, 'getRegistration'),
+          getRegistrations: makeNative(function getRegistrations() { return Promise.resolve([]); }, 'getRegistrations'),
+          get ready() { return new Promise(() => {}); }, // Never resolves
+          get controller() { return fakeController; },
+          startMessages: makeNative(function startMessages() {}, 'startMessages'),
+          addEventListener: makeNative(function addEventListener() {}, 'addEventListener'),
+          removeEventListener: makeNative(function removeEventListener() {}, 'removeEventListener')
+        };
+        Object.defineProperty(navigator, 'serviceWorker', {
+          get: makeNative(function() { return fakeSW; }, 'get serviceWorker'),
+          configurable: false, enumerable: true
+        });
+      }
+    } catch(e) {}
+
+    // ===== WEBXR API =====
+    // VR headset detection narrows device type significantly
+    try {
+      if (navigator.xr) {
+        navigator.xr.isSessionSupported = makeNative(function isSessionSupported() {
+          return Promise.resolve(false);
+        }, 'isSessionSupported');
+        navigator.xr.requestSession = makeNative(function requestSession() {
+          return Promise.reject(new DOMException('NotSupportedError', 'NotSupportedError'));
+        }, 'requestSession');
+        navigator.xr.addEventListener = makeNative(function addEventListener() {}, 'addEventListener');
+        navigator.xr.removeEventListener = makeNative(function removeEventListener() {}, 'removeEventListener');
+      }
+    } catch(e) {}
+
+    // ===== WEBSQL (openDatabase) =====
+    // Deprecated but still probed by fingerprinters for feature detection
+    try {
+      if (window.openDatabase) {
+        window.openDatabase = makeNative(function openDatabase() {
+          throw new DOMException('Web SQL is deprecated', 'SecurityError');
+        }, 'openDatabase');
+      }
+    } catch(e) {}
+
+    // ===== INDEXEDDB.DATABASES() =====
+    // DB name enumeration can detect extensions and past visits
+    try {
+      if (indexedDB && indexedDB.databases) {
+        const origDatabases = indexedDB.databases.bind(indexedDB);
+        indexedDB.databases = makeNative(function databases() {
+          // Return empty list to prevent extension/visit detection
+          // Sites that need their own DB will still work via indexedDB.open()
+          return Promise.resolve([]);
+        }, 'databases');
+      }
+    } catch(e) {}
   }
 
   // =========================================================================
@@ -830,7 +1097,36 @@
 
   const siteSeed = generateSiteSeed(config);
   const rng = new PRNG(siteSeed);
-  const profile = generateProfile(rng);
+  const profile = config._fullProfile 
+    ? JSON.parse(JSON.stringify(config._fullProfile)) 
+    : generateProfile(rng, config);
+
+  // If a named mobile profile was requested, use it to override key fields
+  if (config.mobileProfileName && config.__mobileProfiles__) {
+    const mobileProfs = config.__mobileProfiles__.DEVICE_PROFILES || config.__mobileProfiles__;
+    if (Array.isArray(mobileProfs)) {
+      const named = mobileProfs.find(p => p.name === config.mobileProfileName);
+      if (named) {
+        Object.assign(profile, {
+          userAgent: named.userAgent,
+          platform: named.platform,
+          vendor: named.vendor,
+          screen: named.screen,
+          devicePixelRatio: named.devicePixelRatio,
+          maxTouchPoints: named.maxTouchPoints,
+          hardwareConcurrency: named.hardwareConcurrency,
+          deviceMemory: named.deviceMemory,
+          mobile: true,
+          model: named.model,
+          osVersion: named.osVersion,
+          clientHints: named.clientHints,
+          orientation: named.orientation,
+          gpu: named.gpu
+        });
+        if (named.connection) profile.connection = named.connection;
+      }
+    }
+  }
 
   // Store profile for test page access
   try {
@@ -840,23 +1136,130 @@
   // Apply all spoofing
   applyAllSpoofing(profile, config, rng);
 
+  // =========================================================================
+  // MOBILE EMULATION: DeviceOrientation & DeviceMotion
+  // =========================================================================
+  if (profile.mobile) {
+    // Simulate DeviceOrientationEvent with subtle noise
+    const orientInterval = setInterval(() => {
+      try {
+        const alpha = rng.nextFloat(0, 360);
+        const beta = rng.nextFloat(-2, 5);     // near-upright
+        const gamma = rng.nextFloat(-3, 3);    // slight tilt
+        const event = new DeviceOrientationEvent('deviceorientation', {
+          alpha: parseFloat(alpha.toFixed(4)),
+          beta: parseFloat(beta.toFixed(4)),
+          gamma: parseFloat(gamma.toFixed(4)),
+          absolute: false
+        });
+        window.dispatchEvent(event);
+      } catch(e) {}
+    }, 5000 + Math.floor(rng.next() * 3000));
+
+    // Simulate DeviceMotionEvent (gravity + very tiny noise)
+    const motionInterval = setInterval(() => {
+      try {
+        const g = 9.80 + rng.nextFloat(-0.02, 0.02);
+        const event = new DeviceMotionEvent('devicemotion', {
+          acceleration: { x: rng.nextFloat(-0.05, 0.05), y: rng.nextFloat(-0.05, 0.05), z: rng.nextFloat(-0.05, 0.05) },
+          accelerationIncludingGravity: { x: rng.nextFloat(-0.05, 0.05), y: g, z: rng.nextFloat(-0.05, 0.05) },
+          rotationRate: { alpha: rng.nextFloat(-0.5, 0.5), beta: rng.nextFloat(-0.3, 0.3), gamma: rng.nextFloat(-0.2, 0.2) },
+          interval: 16
+        });
+        window.dispatchEvent(event);
+      } catch(e) {}
+    }, 3000 + Math.floor(rng.next() * 2000));
+
+    // Override navigator.vibrate
+    try {
+      Object.defineProperty(navigator, 'vibrate', { value: () => true, writable: false, configurable: false });
+    } catch(e) {}
+
+    // Ensure TouchEvent constructor exists (Chrome desktop lacks it)
+    try {
+      if (!window.TouchEvent) {
+        window.TouchEvent = function TouchEvent(type, init) { return new Event(type, init); };
+      }
+    } catch(e) {}
+  }
+
+  // =========================================================================
+  // SDP SCRUBBING (WebRTC candidate/fingerprint hiding)
+  // =========================================================================
+  if (config.categories && config.categories.webrtc && config.__sdpPatterns__ && config.__sdpPatterns__.length > 0) {
+    try {
+      const OrigRTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+      if (OrigRTCPeerConnection) {
+        const sdpPatterns = config.__sdpPatterns__;
+        const scrubSdp = (sdp) => {
+          if (!sdp || typeof sdp !== 'string') return sdp;
+          let result = sdp;
+          for (const {pattern, flags} of sdpPatterns) {
+            try { result = result.replace(new RegExp(pattern, flags || 'gi'), ''); } catch(e) {}
+          }
+          return result;
+        };
+
+        const WrappedRTCPeerConnection = function(...args) {
+          const pc = new OrigRTCPeerConnection(...args);
+          const origSetLD = pc.setLocalDescription.bind(pc);
+          pc.setLocalDescription = function(desc, ...rest) {
+            if (desc && desc.sdp) {
+              desc = { type: desc.type, sdp: scrubSdp(desc.sdp) };
+            }
+            return origSetLD(desc, ...rest);
+          };
+          return pc;
+        };
+        WrappedRTCPeerConnection.prototype = OrigRTCPeerConnection.prototype;
+        try {
+          Object.defineProperty(window, 'RTCPeerConnection', { value: WrappedRTCPeerConnection, configurable: false, writable: false });
+          if (window.webkitRTCPeerConnection) Object.defineProperty(window, 'webkitRTCPeerConnection', { value: WrappedRTCPeerConnection, configurable: false, writable: false });
+        } catch(e) {}
+      }
+    } catch(e) {}
+  }
+
+  // =========================================================================
+  // MONITORING BRIDGE: Report API calls back to isolated world
+  // =========================================================================
+  (function() {
+    const ppPost = (api, details) => {
+      try {
+        window.postMessage({ __pp_source: 'main-world', type: 'fp_api_call', api, details }, '*');
+      } catch(e) {}
+    };
+    // Already hooked in spoofing — just add postMessage reporting as a side effect
+    const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+    if (origToDataURL) {
+      const wrapped = function(...a) { ppPost('canvas.toDataURL'); return origToDataURL.apply(this, a); };
+      try { Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', { value: wrapped, writable: true, configurable: true }); } catch(e) {}
+    }
+  })();
+
   // Monitor for dynamically created iframes
   const observer = new MutationObserver(mutations => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node.tagName === 'IFRAME' || node.tagName === 'FRAME') {
-          try {
-            const iframeWindow = node.contentWindow;
-            if (iframeWindow) {
-              // Re-apply spoofing to iframe context
-              // Note: For same-origin iframes, the content script will handle injection
-              // For cross-origin, we can't access contentWindow
-            }
-          } catch(e) {}
+          // Same-origin iframes will get the content script injection automatically
+          // Cross-origin iframes are protected by the browser's same-origin policy
         }
       }
     }
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
+  } catch (__pp_fatal_error) {
+    // Report fatal inject script errors to content script → service worker → badge
+    try {
+      window.postMessage({
+        __pp_source: 'main-world',
+        type: 'fatal_error',
+        msg: __pp_fatal_error.message || 'Unknown inject error',
+        stack: (__pp_fatal_error.stack || '').substring(0, 200)
+      }, '*');
+    } catch(e) {}
+    // Don't re-throw — let the page continue even if spoofing fails
+  }
 })();

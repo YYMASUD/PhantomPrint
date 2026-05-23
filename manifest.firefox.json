@@ -5,6 +5,12 @@
   "version": "3.1.0",
   "description": "Complete anti-detect browser extension: fingerprint spoofing, cookie management, tracker blocking, proxy, mobile emulation, cloud sync, and more. Rivals Multilogin & GoLogin.",
   "homepage_url": "https://github.com/phantomprint/phantomprint",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "phantomprint@privacy.tools",
+      "strict_min_version": "128.0"
+    }
+  },
   "permissions": [
     "storage",
     "tabs",
@@ -14,23 +20,15 @@
     "declarativeNetRequestFeedback",
     "scripting",
     "webNavigation",
-    "webRequest",
     "alarms",
     "notifications",
-    "privacy",
-    "clipboardWrite"
-  ],
-  "optional_permissions": [
-    "proxy",
-    "browsingData",
-    "cookies"
+    "cookies",
+    "privacy"
   ],
   "host_permissions": ["<all_urls>"],
-  "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflare-dns.com https://dns.google https://dns.quad9.net https://mozilla.cloudflare-dns.com;"
-  },
   "background": {
-    "service_worker": "background/service-worker.js"
+    "scripts": ["background/service-worker.js"],
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -59,25 +57,10 @@
     "page": "options/options.html",
     "open_in_tab": true
   },
-  "options_page": "options/options.html",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "commands": {
-    "toggle-protection": {
-      "suggested_key": { "default": "Alt+Shift+P", "mac": "Alt+Shift+P" },
-      "description": "Toggle fingerprint protection on/off"
-    },
-    "randomize-fingerprint": {
-      "suggested_key": { "default": "Alt+Shift+R", "mac": "Alt+Shift+R" },
-      "description": "Randomize fingerprint"
-    },
-    "open-test-page": {
-      "suggested_key": { "default": "Alt+Shift+T", "mac": "Alt+Shift+T" },
-      "description": "Open fingerprint test page"
-    }
   },
   "declarative_net_request": {
     "rule_resources": [
@@ -88,20 +71,11 @@
       }
     ]
   },
-  "externally_connectable": {
-    "ids": ["*"]
-  },
   "web_accessible_resources": [
     {
       "resources": [
         "test/fingerprint-test.html",
-        "ui/cookie-manager.html",
-        "onboarding/onboarding.html"
-      ],
-      "matches": ["<all_urls>"]
-    },
-    {
-      "resources": [
+        "onboarding/onboarding.html",
         "data/user-agents-data.json",
         "data/statcounter-data.json",
         "data/caniuse-data.json",
@@ -117,8 +91,6 @@
         "data/font-database.json",
         "data/gpu-database.json",
         "data/timezone-database.json",
-        "data/blocklists/tracker-domains.json",
-        "data/blocklists/fingerprint-scripts.json",
         "data/modules/ua-database.js",
         "data/modules/market-share.js",
         "data/modules/feature-support.js",
