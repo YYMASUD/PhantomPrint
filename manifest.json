@@ -2,48 +2,35 @@
   "manifest_version": 3,
   "name": "PhantomPrint",
   "short_name": "PhantomPrint",
-  "version": "3.1.0",
-  "description": "Complete anti-detect browser extension: fingerprint spoofing, cookie management, tracker blocking, proxy, mobile emulation, cloud sync, and more. Rivals Multilogin & GoLogin.",
-  "homepage_url": "https://github.com/phantomprint/phantomprint",
+  "version": "4.0.0",
+  "description": "Advanced browser fingerprint protection — spoof canvas, WebGL, audio, navigator, screen, fonts, WebRTC, timezone, and more with realistic, consistent profiles.",
   "permissions": [
     "storage",
     "tabs",
     "activeTab",
+    "scripting",
+    "webRequest",
     "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess",
-    "declarativeNetRequestFeedback",
-    "scripting",
     "webNavigation",
-    "webRequest",
     "alarms",
-    "notifications",
-    "privacy",
-    "clipboardWrite"
+    "notifications"
   ],
-  "optional_permissions": [
-    "proxy",
-    "browsingData",
-    "cookies"
+  "host_permissions": [
+    "<all_urls>"
   ],
-  "host_permissions": ["<all_urls>"],
-  "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflare-dns.com https://dns.google https://dns.quad9.net https://mozilla.cloudflare-dns.com;"
-  },
   "background": {
     "service_worker": "background/service-worker.js"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content/content-script.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/content.js"
+      ],
       "run_at": "document_start",
-      "all_frames": true
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["inject/main-world-inject.js"],
-      "run_at": "document_start",
-      "world": "MAIN",
       "all_frames": true
     }
   ],
@@ -53,82 +40,28 @@
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
+    },
+    "default_title": "PhantomPrint"
   },
-  "options_ui": {
-    "page": "options/options.html",
-    "open_in_tab": true
-  },
-  "options_page": "options/options.html",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "commands": {
-    "toggle-protection": {
-      "suggested_key": { "default": "Alt+Shift+P", "mac": "Alt+Shift+P" },
-      "description": "Toggle fingerprint protection on/off"
-    },
-    "randomize-fingerprint": {
-      "suggested_key": { "default": "Alt+Shift+R", "mac": "Alt+Shift+R" },
-      "description": "Randomize fingerprint"
-    },
-    "open-test-page": {
-      "suggested_key": { "default": "Alt+Shift+T", "mac": "Alt+Shift+T" },
-      "description": "Open fingerprint test page"
-    }
-  },
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "header_rules",
-        "enabled": true,
-        "path": "rules/header-rules.json"
-      }
-    ]
-  },
-  "externally_connectable": {
-    "ids": ["*"]
-  },
+  "options_page": "options/options.html",
   "web_accessible_resources": [
     {
       "resources": [
-        "test/fingerprint-test.html",
-        "ui/cookie-manager.html",
-        "onboarding/onboarding.html"
+        "inject/inject.js",
+        "inject/profiles.js",
+        "inject/prng.js"
       ],
-      "matches": ["<all_urls>"]
-    },
-    {
-      "resources": [
-        "data/user-agents-data.json",
-        "data/statcounter-data.json",
-        "data/caniuse-data.json",
-        "data/webgl-profiles.json",
-        "data/amiunique-distributions.json",
-        "data/ua-categories.json",
-        "data/tls-fingerprints.json",
-        "data/profiles/windows.json",
-        "data/profiles/macos.json",
-        "data/profiles/android.json",
-        "data/profiles/ios.json",
-        "data/profiles/linux.json",
-        "data/font-database.json",
-        "data/gpu-database.json",
-        "data/timezone-database.json",
-        "data/blocklists/tracker-domains.json",
-        "data/blocklists/fingerprint-scripts.json",
-        "data/modules/ua-database.js",
-        "data/modules/market-share.js",
-        "data/modules/feature-support.js",
-        "data/modules/webgl-database.js",
-        "data/modules/distribution-data.js",
-        "data/modules/ua-categories.js",
-        "data/modules/fingerprint-validator.js",
-        "data/modules/harvest-collector.js"
-      ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://* http://*;"
+  }
 }

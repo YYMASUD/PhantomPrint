@@ -1,397 +1,389 @@
-/**
- * PhantomPrint Popup — Controller
- * Manages popup state, toggle interactions, and service worker communication.
- */
-'use strict';
-
+// PhantomPrint v4.0 — Popup Controller
 (function() {
-  // =========================================================================
+  'use strict';
+
+  // ═══════════════════════════════════════════════
   // DOM References
-  // =========================================================================
-  const $ = (id) => document.getElementById(id);
-  const masterSwitch = $('masterSwitch');
-  const scoreValue = $('scoreValue');
-  const gaugeCircle = $('gaugeCircle');
-  const profileName = $('profileName');
-  const profBrowser = $('profBrowser');
-  const profOS = $('profOS');
-  const profScreen = $('profScreen');
-  const profGPU = $('profGPU');
-  const profProxy = $('profProxy');
-  const riskFill = $('riskFill');
-  const riskScore = $('riskScore');
-  const blockedCount = $('blockedCount');
-  const togglesGrid = $('togglesGrid');
-  const popup = document.querySelector('.popup');
+  // ═══════════════════════════════════════════════
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
 
-  // =========================================================================
-  // State
-  // =========================================================================
-  let state = null;
+  let state = {};
 
-  // =========================================================================
-  // Initialize
-  // =========================================================================
-  async function init() {
+  // ═══════════════════════════════════════════════
+  // Initialize on DOM ready
+  // ═══════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', async () => {
     try {
       state = await sendMessage({ action: 'getState' });
     } catch (e) {
-      state = getDefaultState();
+      state = {};
     }
     renderState();
     bindEvents();
-    loadSiteInfo();
+  });
+
+  // ═══════════════════════════════════════════════
+  // Message helper
+  // ═══════════════════════════════════════════════
+  function sendMessage(msg) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(msg, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(response);
+        }
+      });
+    });
   }
 
-  function getDefaultState() {
-    return {
-      enabled: true,
-      categories: {
-        canvas: true, webgl: true, audio: true, webrtc: true,
-        fonts: true, timezone: true, behavior: true, headers: true,
-        storage: true, proxy: false
-      },
-      sessionSeed: 'default',
-      profileName: 'Default Profile'
-    };
-  }
-
-  // =========================================================================
-  // Render
-  // =========================================================================
-  async function renderState() {
-    if (!state) return;
-
+  // ═══════════════════════════════════════════════
+  // Render current state to UI
+  // ═══════════════════════════════════════════════
+  function renderState() {
     // Master toggle
-    masterSwitch.checked = state.enabled !== false;
-    popup.classList.toggle('disabled', !state.enabled);
-
-    // Protection score (async — queries storage for module states)
-    const score = await calculateScore(state);
-    updateGauge(score);
+    const masterToggle = $('#master-toggle');
+    const overlay = $('#disabled-overlay');
+    masterToggle.checked = state.isEnabled !== false;
+    overlay.classList.toggle('active', !masterToggle.checked);
 
     // Profile info
-    profileName.textContent = state.profileName || 'Default Profile';
-    profBrowser.textContent = (state._profile && state._profile.browser) || 'Chrome 136';
-    profOS.textContent = (state._profile && state._profile.os) || 'Windows 11';
-    profScreen.textContent = (state._profile && state._profile.screen)
-      ? `${state._profile.screen.width}×${state._profile.screen.height}`
-      : '1920×1080';
-    profGPU.textContent = (state._profile && state._profile.gpu) || 'NVIDIA RTX 4070';
-    profGPU.title = (state._profile && state._profile.gpu) || '';
-
-    // Proxy status
-    if (state._proxyActive) {
-      profProxy.innerHTML = '<span class="status-dot dot-on"></span> Connected';
-    } else {
-      profProxy.innerHTML = '<span class="status-dot dot-off"></span> Not Set';
+    const p = state.fingerprintProfile;
+    if (p) {
+      const chromeMatch = (p.userAgent || '').match(/Chrome\/(\d+)/);
+      const browserStr = chromeMatch ? 'Chrome ' + chromeMatch[1] : 'Browser';
+      $('#pf-browser').textContent = browserStr;
+      $('#pf-os').textContent = p.os || 'Unknown';
+      $('#pf-screen').textContent = p.screen ? p.screen.width + '\u00D7' + p.screen.height : '-';
+      const gpuShort = (p.gpu && p.gpu.renderer) ? p.gpu.renderer.replace(/ANGLE \(.*?,\s*/, '').replace(/\s*Direct3D.*/, '').replace(/\s*OpenGL.*/, '') : '-';
+      $('#pf-gpu').textContent = gpuShort;
     }
 
-    // Category toggles
-    const cats = state.categories || {};
-    togglesGrid.querySelectorAll('input[data-key]').forEach(input => {
-      const key = input.dataset.key;
-      input.checked = cats[key] !== false;
+    // Module toggles
+    const modules = state.modules || {};
+    $$('.module-card').forEach((card) => {
+      const mod = card.dataset.module;
+      const cb = card.querySelector('input[type="checkbox"]');
+      const isOn = modules[mod] !== false;
+      cb.checked = isOn;
+      card.classList.toggle('active', isOn);
+      card.classList.toggle('inactive', !isOn);
     });
+
+    // Advanced section
+    if (state.autoRotate) $('#auto-rotate-toggle').checked = true;
+    if (state.autoRotateInterval) $('#rotate-interval').value = String(state.autoRotateInterval);
+    if (state.profilePreset) $('#profile-preset').value = state.profilePreset;
+    if (state.noiseLevel) $('#noise-level').value = state.noiseLevel;
+
+    // Protection score
+    updateProtectionScore();
   }
 
-  async function calculateScore(state) {
-    if (!state.enabled) return 0;
-    let score = 10; // Base for being enabled
+  // ═══════════════════════════════════════════════
+  // Protection score calculation
+  // ═══════════════════════════════════════════════
+  function updateProtectionScore() {
+    const modules = state.modules || {};
+    const allMods = ['canvas','webgl','audio','navigator','screen','fonts','webrtc','timezone','rects','battery','media','speech'];
+    const activeCount = allMods.filter(m => modules[m] !== false).length;
+    const total = allMods.length;
+    const pct = Math.round((activeCount / total) * 100);
 
-    // Core spoofing categories (max 50pts)
-    const cats = state.categories || {};
-    const coreKeys = ['canvas','webgl','audio','webrtc','fonts','timezone','behavior','headers','storage','proxy'];
-    const coreEnabled = coreKeys.filter(k => cats[k] !== false).length;
-    score += Math.round((coreEnabled / coreKeys.length) * 50);
+    // Has profile?
+    const hasProfile = !!state.fingerprintProfile;
+    const finalPct = hasProfile ? pct : Math.round(pct * 0.5);
 
-    // Advanced modules (max 40pts, 5pts each)
-    try {
-      const stored = await chrome.storage.local.get([
-        'pp_tracker_enabled', 'pp_replay_enabled', 'pp_link_cleaner_enabled',
-        'pp_referrer_mode', 'pp_doh_enabled', 'pp_net_privacy_enabled'
-      ]);
-      const moduleChecks = [
-        stored.pp_tracker_enabled !== false,           // Tracker blocker
-        !!stored.pp_replay_enabled,                    // Session replay prevention
-        stored.pp_link_cleaner_enabled !== false,       // Link cleaner
-        stored.pp_referrer_mode && stored.pp_referrer_mode !== 'off', // Referrer control
-        !!stored.pp_doh_enabled,                       // DNS-over-HTTPS
-        stored.pp_net_privacy_enabled !== false,        // Network privacy headers
-        !!state._proxyActive,                          // Proxy connected
-        !!state.crossSiteIsolation                     // Cross-site isolation
-      ];
-      score += moduleChecks.filter(Boolean).length * 5;
-    } catch (e) {
-      // Fallback: just add crossSiteIsolation and proxy
-      if (state.crossSiteIsolation) score += 5;
-      if (state._proxyActive) score += 5;
-    }
+    $('#score-value').textContent = finalPct + '%';
+    $('#score-detail').textContent = activeCount + '/' + total + ' modules active';
 
-    return Math.min(100, score);
-  }
+    // Update ring
+    const circumference = 213.6; // 2 * PI * 34
+    const offset = circumference - (circumference * finalPct / 100);
+    const ring = $('#score-ring-fill');
+    if (ring) ring.style.strokeDashoffset = offset;
 
-  function updateGauge(score) {
-    const circumference = 314; // 2 * PI * 50
-    const offset = circumference - (score / 100) * circumference;
-    gaugeCircle.style.strokeDashoffset = offset;
-    scoreValue.textContent = score;
-
-    // Color based on score
-    if (score >= 70) gaugeCircle.style.stroke = '#6C5CE7';
-    else if (score >= 40) gaugeCircle.style.stroke = '#FFB74D';
-    else gaugeCircle.style.stroke = '#FF5252';
-  }
-
-  async function loadSiteInfo() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.url) return;
-
-      const url = new URL(tab.url);
-      const host = url.hostname;
-
-      // Get monitoring data for this site
-      const data = await sendMessage({ action: 'getSiteMonitoring', site: host });
-      if (data) {
-        const risk = data.riskScore || 0;
-        riskFill.style.width = `${risk}%`;
-
-        if (risk <= 30) {
-          riskFill.className = 'risk-fill';
-          riskScore.textContent = 'Low';
-          riskScore.className = 'risk-score';
-        } else if (risk <= 60) {
-          riskFill.className = 'risk-fill medium';
-          riskScore.textContent = 'Medium';
-          riskScore.className = 'risk-score medium';
-        } else {
-          riskFill.className = 'risk-fill high';
-          riskScore.textContent = 'High';
-          riskScore.className = 'risk-score high';
-        }
-
-        blockedCount.textContent = data.totalCalls || 0;
-      }
-    } catch (e) {
-      // Tab access may fail
+    // Color coding
+    const scoreEl = $('#score-value');
+    if (finalPct >= 70) {
+      scoreEl.style.color = 'var(--accent)';
+    } else if (finalPct >= 40) {
+      scoreEl.style.color = 'var(--warning)';
+    } else {
+      scoreEl.style.color = 'var(--danger)';
     }
   }
 
-  // =========================================================================
-  // Events
-  // =========================================================================
+  // ═══════════════════════════════════════════════
+  // Bind all event listeners
+  // ═══════════════════════════════════════════════
   function bindEvents() {
     // Master toggle
-    masterSwitch.addEventListener('change', async () => {
-      state.enabled = masterSwitch.checked;
-      popup.classList.toggle('disabled', !state.enabled);
-      updateGauge(calculateScore(state));
-      await sendMessage({ action: 'updateState', key: 'enabled', value: state.enabled });
+    $('#master-toggle').addEventListener('change', async (e) => {
+      const enabled = e.target.checked;
+      await sendMessage({ action: 'toggleEnabled', enabled });
+      state.isEnabled = enabled;
+      $('#disabled-overlay').classList.toggle('active', !enabled);
     });
 
-    // Category toggles
-    togglesGrid.querySelectorAll('input[data-key]').forEach(input => {
-      input.addEventListener('change', async () => {
-        const key = input.dataset.key;
-        if (!state.categories) state.categories = {};
-        state.categories[key] = input.checked;
-        updateGauge(calculateScore(state));
-        await sendMessage({ action: 'updateState', key: `categories.${key}`, value: input.checked });
-      });
-    });
+    // ONE-CLICK RANDOMIZE
+    const randomizeBtn = $('#randomize-all-btn');
+    randomizeBtn.addEventListener('click', async () => {
+      randomizeBtn.classList.add('loading');
+      randomizeBtn.disabled = true;
 
-    // Toggle dropdown
-    $('randomizeMenu').addEventListener('click', (e) => {
-      e.stopPropagation();
-      $('randomizeDropdown').classList.toggle('hidden');
-    });
+      try {
+        const preset = $('#profile-preset').value || 'Random';
+        const response = await sendMessage({ action: 'randomizeAll', preset });
 
-    // Close dropdown on click outside
-    document.addEventListener('click', () => {
-      if ($('randomizeDropdown')) {
-        $('randomizeDropdown').classList.add('hidden');
+        if (response && response.profile) {
+          state.fingerprintProfile = response.profile;
+          state.isEnabled = true;
+        }
+
+        // Refresh full state
+        state = await sendMessage({ action: 'getState' });
+
+        randomizeBtn.classList.remove('loading');
+        randomizeBtn.classList.add('success');
+        const btnText = randomizeBtn.querySelector('.btn-text');
+        const btnIcon = randomizeBtn.querySelector('.btn-icon');
+        btnText.textContent = '\u2713 Randomized!';
+        btnIcon.textContent = '\u2713';
+
+        renderState();
+
+        setTimeout(() => {
+          randomizeBtn.classList.remove('success');
+          btnText.textContent = 'ONE-CLICK RANDOMIZE ALL';
+          btnIcon.textContent = '\u{1F3B2}';
+          randomizeBtn.disabled = false;
+        }, 1500);
+      } catch (error) {
+        console.error('Randomization failed:', error);
+        randomizeBtn.classList.remove('loading');
+        randomizeBtn.classList.add('error');
+        const btnText = randomizeBtn.querySelector('.btn-text');
+        btnText.textContent = '\u26A0 Error - Retry';
+        randomizeBtn.disabled = false;
+        setTimeout(() => {
+          randomizeBtn.classList.remove('error');
+          btnText.textContent = 'ONE-CLICK RANDOMIZE ALL';
+        }, 2000);
       }
     });
 
-    // Dropdown items click handlers
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-      item.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        $('randomizeDropdown').classList.add('hidden');
-        
-        $('randomizeBtn').classList.add('spinning');
-        
-        try {
-          const action = item.dataset.action === 'atoz' ? 'randomizeAtoZ' : 'randomize';
-          const constraints = item.dataset.action === 'atoz' ? {} : {
-            os: item.dataset.os || undefined,
-            browser: item.dataset.browser || undefined
-          };
-          
-          const result = await sendMessage({ action, data: constraints });
-          if (result) {
-            state = { ...state, ...result };
-            renderState();
-            
-            $('scoreValue').classList.add('flash');
-            setTimeout(() => $('scoreValue').classList.remove('flash'), 600);
+    // Module toggles
+    $$('.module-card input[type="checkbox"]').forEach((cb) => {
+      cb.addEventListener('change', async (e) => {
+        const card = e.target.closest('.module-card');
+        const mod = card.dataset.module;
+        const enabled = e.target.checked;
+        card.classList.toggle('active', enabled);
+        card.classList.toggle('inactive', !enabled);
+
+        await sendMessage({ action: 'toggleModule', module: mod, enabled });
+        if (!state.modules) state.modules = {};
+        state.modules[mod] = enabled;
+        updateProtectionScore();
+      });
+    });
+
+    // Advanced toggle
+    $('#advanced-toggle').addEventListener('click', () => {
+      const section = $('#advanced-section');
+      const chevron = $('#advanced-chevron');
+      section.classList.toggle('open');
+      chevron.classList.toggle('open');
+    });
+
+    // Auto-rotate
+    $('#auto-rotate-toggle').addEventListener('change', async (e) => {
+      const interval = parseInt($('#rotate-interval').value) || 30;
+      await sendMessage({ action: 'setAutoRotate', enabled: e.target.checked, interval });
+    });
+
+    $('#rotate-interval').addEventListener('change', async (e) => {
+      const autoOn = $('#auto-rotate-toggle').checked;
+      if (autoOn) {
+        await sendMessage({ action: 'setAutoRotate', enabled: true, interval: parseInt(e.target.value) });
+      }
+    });
+
+    // Profile preset
+    $('#profile-preset').addEventListener('change', async (e) => {
+      await sendMessage({ action: 'setProfilePreset', preset: e.target.value });
+    });
+
+    // Noise level
+    $('#noise-level').addEventListener('change', async (e) => {
+      await sendMessage({ action: 'setNoiseLevel', level: e.target.value });
+    });
+
+    // Action buttons
+    $('#btn-view').addEventListener('click', () => {
+      if (state.fingerprintProfile) {
+        const p = state.fingerprintProfile;
+        const info = [
+          'ID: ' + (p.id || '-'),
+          'UA: ' + (p.userAgent || '-'),
+          'Platform: ' + (p.platform || '-'),
+          'Screen: ' + (p.screen ? p.screen.width + 'x' + p.screen.height : '-'),
+          'GPU: ' + (p.gpu ? p.gpu.renderer : '-'),
+          'Cores: ' + (p.hardwareConcurrency || '-'),
+          'Memory: ' + (p.deviceMemory || '-') + 'GB',
+          'TZ: ' + (p.timezone ? p.timezone.zone : '-'),
+          'Lang: ' + (p.language || '-')
+        ].join('\n');
+        alert(info);
+      }
+    });
+
+    $('#btn-test').addEventListener('click', async () => {
+      await sendMessage({ action: 'openTestSite', site: 'browserleaks' });
+    });
+
+    $('#btn-export').addEventListener('click', async () => {
+      const result = await sendMessage({ action: 'exportProfile' });
+      if (result && result.data) {
+        const blob = new Blob([result.data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'phantomprint-profile.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    $('#btn-import').addEventListener('click', () => {
+      $('#import-file').click();
+    });
+
+    $('#import-file').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      const result = await sendMessage({ action: 'importProfile', data: text });
+      if (result && result.success) {
+        state = await sendMessage({ action: 'getState' });
+        renderState();
+        alert('Profile imported successfully!');
+      } else {
+        alert('Import failed: ' + (result.error || 'Unknown error'));
+      }
+      e.target.value = '';
+    });
+
+    // Settings
+    $('#btn-settings').addEventListener('click', () => {
+      chrome.runtime.openOptionsPage();
+    });
+
+    // Whitelist
+    $('#whitelist-btn').addEventListener('click', () => {
+      $('#whitelist-modal').classList.add('active');
+      loadWhitelist();
+    });
+
+    $('#whitelist-close').addEventListener('click', () => {
+      $('#whitelist-modal').classList.remove('active');
+    });
+
+    
+    // Timezone mode — with IP-based auto-sync
+    var tzModeEl = document.getElementById('tz-mode');
+    var tzDetectRow = document.getElementById('tz-detect-row');
+    var tzCurrentRow = document.getElementById('tz-current-row');
+    var tzWarning = document.getElementById('tz-warning');
+
+    if (tzModeEl) {
+      if (state.timezoneMode) tzModeEl.value = state.timezoneMode;
+
+      function updateTzUI() {
+        var mode = tzModeEl.value;
+        var showDetect = (mode === 'ip' || mode === 'custom');
+        if (tzDetectRow) tzDetectRow.style.display = showDetect ? 'flex' : 'none';
+        var hasLoc = state.ipLocation || state.customTimezone;
+        if (tzCurrentRow) tzCurrentRow.style.display = (showDetect && hasLoc) ? 'flex' : 'none';
+        if (tzWarning) tzWarning.style.display = (mode !== 'auto') ? 'block' : 'none';
+        // Show detected info
+        var tzVal = document.getElementById('tz-current-value');
+        if (tzVal) {
+          if (state.ipLocation && state.ipLocation.timezone) {
+            tzVal.textContent = state.ipLocation.timezone.zone + ' (' + (state.ipLocation.country || '') + ') — lang: ' + (state.ipLocation.languages ? state.ipLocation.languages[0] : '-');
+          } else if (state.customTimezone) {
+            tzVal.textContent = state.customTimezone.zone || '-';
           }
-        } catch (err) {
-          console.error(err);
-        } finally {
-          $('randomizeBtn').classList.remove('spinning');
         }
-      });
-    });
+      }
+      updateTzUI();
 
-    // Randomize Button (default full randomize)
-    $('randomizeBtn').addEventListener('click', async () => {
-      $('randomizeBtn').classList.add('spinning');
-      try {
-        const result = await sendMessage({ action: 'randomize', data: {} });
-        if (result) {
-          state = { ...state, ...result };
-          renderState();
-          
-          $('scoreValue').classList.add('flash');
-          setTimeout(() => $('scoreValue').classList.remove('flash'), 600);
+      tzModeEl.addEventListener('change', async function(e) {
+        var mode = e.target.value;
+        await sendMessage({ action: 'setTimezoneMode', mode: mode });
+        state.timezoneMode = mode;
+        // Auto-detect when switching to IP mode
+        if (mode === 'ip' && !state.ipLocation) {
+          var tzDetectBtn2 = document.getElementById('tz-detect-btn');
+          if (tzDetectBtn2) tzDetectBtn2.click();
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        $('randomizeBtn').classList.remove('spinning');
+        updateTzUI();
+      });
+    }
+
+    var tzDetectBtn = document.getElementById('tz-detect-btn');
+    if (tzDetectBtn) {
+      tzDetectBtn.addEventListener('click', async function() {
+        tzDetectBtn.textContent = 'Detecting...';
+        tzDetectBtn.disabled = true;
+        try {
+          var result = await sendMessage({ action: 'autoDetectTimezone' });
+          if (result && result.success && result.ipLocation) {
+            state.ipLocation = result.ipLocation;
+            state.customTimezone = result.ipLocation.timezone;
+            updateTzUI();
+            tzDetectBtn.textContent = '\u2713 ' + result.ipLocation.timezone.zone;
+          } else {
+            tzDetectBtn.textContent = 'Failed - Retry';
+          }
+        } catch(e) {
+          tzDetectBtn.textContent = 'Error - Retry';
+        }
+        setTimeout(function() { tzDetectBtn.textContent = 'Detect from IP'; tzDetectBtn.disabled = false; }, 2500);
+      });
+    }
+
+    $('#wl-add-btn').addEventListener('click', async () => {
+      const input = $('#wl-domain-input');
+      const domain = input.value.trim();
+      if (domain) {
+        await sendMessage({ action: 'addToWhitelist', domain });
+        input.value = '';
+        loadWhitelist();
       }
     });
-
-    // Dashboard button
-    $('dashboardBtn').addEventListener('click', () => {
-      chrome.runtime.openOptionsPage();
-      window.close();
-    });
-
-    // Test button
-    $('testBtn').addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('test/fingerprint-test.html') });
-      window.close();
-    });
-
-    // Settings button
-    $('settingsBtn').addEventListener('click', () => {
-      chrome.runtime.openOptionsPage();
-      window.close();
-    });
-
-    // Cookie Manager button
-    $('cookieBtn').addEventListener('click', () => {
-      sendMessage({ action: 'openCookieManager' });
-      window.close();
-    });
-
-    // Whitelist button
-    $('whitelistBtn').addEventListener('click', async () => {
-      try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab && tab.url) {
-          const host = new URL(tab.url).hostname;
-          await sendMessage({ action: 'addWhitelist', site: host });
-          $('whitelistBtn').textContent = '✓ Whitelisted';
-          $('whitelistBtn').style.borderColor = '#00E676';
-          $('whitelistBtn').style.color = '#00E676';
-        }
-      } catch (e) {}
-    });
-
-    // =========================================================================
-    // NEW MODULE QUICK TOGGLES
-    // =========================================================================
-
-    // Tracker Blocker toggle
-    const trackerToggle = $('trackerToggle');
-    if (trackerToggle) {
-      // Load current state
-      chrome.storage.local.get('pp_tracker_enabled', r => {
-        trackerToggle.checked = r.pp_tracker_enabled !== false;
-      });
-      trackerToggle.addEventListener('change', async () => {
-        const enabled = trackerToggle.checked;
-        chrome.storage.local.set({ pp_tracker_enabled: enabled });
-        if (enabled) {
-          await sendMessage({ action: 'trackerInit' });
-        } else {
-          // Remove all tracker DNR rules (5000-5999)
-          const ruleIds = Array.from({length: 1000}, (_, i) => 5000 + i);
-          chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: ruleIds }).catch(() => {});
-        }
-        showToast('Tracker Blocker ' + (enabled ? 'Enabled' : 'Disabled'));
-      });
-    }
-
-    // Session Replay Prevention toggle
-    const replayToggle = $('replayToggle');
-    if (replayToggle) {
-      chrome.storage.local.get('pp_replay_enabled', r => {
-        replayToggle.checked = !!r.pp_replay_enabled;
-      });
-      replayToggle.addEventListener('change', async () => {
-        const enabled = replayToggle.checked;
-        chrome.storage.local.set({ pp_replay_enabled: enabled });
-        if (enabled) await sendMessage({ action: 'replayEnable' });
-        else await sendMessage({ action: 'replayDisable' });
-        showToast('Session Replay Prevention ' + (enabled ? 'Enabled' : 'Disabled'));
-      });
-    }
-
-    // Link Cleaner toggle
-    const linkCleanToggle = $('linkCleanToggle');
-    if (linkCleanToggle) {
-      chrome.storage.local.get('pp_link_cleaner_enabled', r => {
-        linkCleanToggle.checked = r.pp_link_cleaner_enabled !== false;
-      });
-      linkCleanToggle.addEventListener('change', async () => {
-        const enabled = linkCleanToggle.checked;
-        chrome.storage.local.set({ pp_link_cleaner_enabled: enabled });
-        if (enabled) await sendMessage({ action: 'linkCleanerEnable' });
-        else await sendMessage({ action: 'linkCleanerDisable' });
-        showToast('Link Cleaner ' + (enabled ? 'Enabled' : 'Disabled'));
-      });
-    }
   }
 
-  // =========================================================================
-  // Toast notification
-  // =========================================================================
-  function showToast(msg) {
-    let el = document.getElementById('pp-toast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'pp-toast';
-      el.style.cssText = 'position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(20,20,40,0.95);border:1px solid rgba(108,92,231,0.4);border-radius:8px;padding:8px 16px;font-size:12px;color:#e8e8f0;z-index:9999;transition:all 0.3s;pointer-events:none;opacity:0;white-space:nowrap;';
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.style.opacity = '1';
-    el.style.transform = 'translateX(-50%) translateY(0)';
-    clearTimeout(el._timer);
-    el._timer = setTimeout(() => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateX(-50%) translateY(8px)';
-    }, 2000);
-  }
-
-  // =========================================================================
-  // Messaging
-  // =========================================================================
-  function sendMessage(msg) {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage(msg, (response) => {
-        resolve(response || {});
+  // ═══════════════════════════════════════════════
+  // Whitelist management
+  // ═══════════════════════════════════════════════
+  async function loadWhitelist() {
+    const result = await sendMessage({ action: 'getWhitelist' });
+    const list = $('#wl-list');
+    list.innerHTML = '';
+    const whitelist = result.whitelist || [];
+    whitelist.forEach((domain) => {
+      const item = document.createElement('div');
+      item.className = 'wl-item';
+      item.innerHTML = '<span class="wl-item-domain">' + domain + '</span><button class="wl-item-remove" data-domain="' + domain + '">\u2715</button>';
+      item.querySelector('.wl-item-remove').addEventListener('click', async () => {
+        await sendMessage({ action: 'removeFromWhitelist', domain });
+        loadWhitelist();
       });
+      list.appendChild(item);
     });
   }
 
-  // =========================================================================
-  // Boot
-  // =========================================================================
-  document.addEventListener('DOMContentLoaded', init);
 })();
