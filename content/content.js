@@ -1,5 +1,5 @@
-// PhantomPrint v5.2 — Content Script
-// Runs at document_start. Injects config + inject.js into main world.
+// PhantomPrint v5.0 — Content Script
+// Runs at document_start. Injects config + all spoofing scripts into main world.
 (function() {
   "use strict";
 
@@ -11,7 +11,7 @@
   var domain = window.location.hostname;
 
   // Get real Chrome version for dynamic UA building
-  var realChromeVersion = "148";
+  var realChromeVersion = "136";
   try {
     var m = navigator.userAgent.match(/Chrome\/(\d+)/);
     if (m) realChromeVersion = m[1];
@@ -20,7 +20,8 @@
   chrome.storage.local.get([
     "isEnabled", "fingerprintProfile", "modules", "seed",
     "noiseLevel", "whitelist", "perSiteProfiles",
-    "timezoneMode", "customTimezone", "ipLocation"
+    "timezoneMode", "customTimezone", "ipLocation",
+    "pp_history"
   ], function(data) {
     if (data.isEnabled === false) return;
 
@@ -42,17 +43,36 @@
       profile = JSON.parse(JSON.stringify(perSite[domain]));
     }
 
-    // ALWAYS update Chrome version to match real browser
+    // ALWAYS update Chrome version to match real browser (avoids UA mismatch detection)
     if (profile.userAgent && profile.userAgent.includes("Chrome/")) {
       profile.userAgent = profile.userAgent.replace(
-        /Chrome\/\d+\.\d+\.\d+\.\d+/,
+        /Chrome\/\d+(\.\d+)*/,
         "Chrome/" + realChromeVersion + ".0.0.0"
       );
       if (profile.appVersion) {
         profile.appVersion = profile.appVersion.replace(
-          /Chrome\/\d+\.\d+\.\d+\.\d+/,
+          /Chrome\/\d+(\.\d+)*/,
           "Chrome/" + realChromeVersion + ".0.0.0"
         );
+      }
+      // Update client hints major version too
+      if (profile.clientHints) {
+        if (profile.clientHints.brands) {
+          profile.clientHints.brands = profile.clientHints.brands.map(function(b) {
+            if (b.brand === 'Chromium' || b.brand === 'Google Chrome' || b.brand === 'Microsoft Edge') {
+              return { brand: b.brand, version: realChromeVersion };
+            }
+            return b;
+          });
+        }
+        if (profile.clientHints.fullVersionList) {
+          profile.clientHints.fullVersionList = profile.clientHints.fullVersionList.map(function(b) {
+            if (b.brand === 'Chromium' || b.brand === 'Google Chrome' || b.brand === 'Microsoft Edge') {
+              return { brand: b.brand, version: realChromeVersion + '.0.0.0' };
+            }
+            return b;
+          });
+        }
       }
     }
 
@@ -66,7 +86,7 @@
     if (tzMode === "auto") {
       // Auto = use system timezone, DON'T spoof at all
       profile.timezone = null;
-      modules.timezone = false; // FORCE disable timezone module
+      modules.timezone = false;
     } else if (tzMode === "ip" && ipLoc && ipLoc.timezone) {
       profile.timezone = ipLoc.timezone;
       if (ipLoc.languages) {
@@ -91,18 +111,55 @@
       noiseLevel: data.noiseLevel || "medium"
     };
 
-    // Inject config as hidden element
+    var configJson = JSON.stringify(config);
+
+    // ── Inject config as hidden element (removed by inject.js after reading) ──
     var el = document.createElement("script");
     el.type = "application/json";
     el.id = "__phantomprint_cfg__";
-    el.textContent = JSON.stringify(config);
+    el.textContent = configJson;
     (document.head || document.documentElement).prepend(el);
 
-    // Inject spoofing script into main world
-    var script = document.createElement("script");
-    script.src = chrome.runtime.getURL("inject/inject.js");
-    script.onload = function() { script.remove(); };
-    (document.head || document.documentElement).prepend(script);
+    // ── Inject all spoofing scripts in correct order ──
+    // Order matters: inject.js first (sets up PRNG + core), then extras
+    var scripts = [
+      "inject/inject.js",        // Core: navigator, screen, canvas, webgl, audio, fonts, webrtc, rects, timezone, battery, speech, media, timing, storage
+      "inject/webgpu-spoof.js",  // WebGPU API spoofing
+      "inject/extra-spoof.js"    // Geolocation, matchMedia, Permissions, Keyboard, Network
+    ];
+
+    // Inject sequentially to maintain order
+    function injectNext(index) {
+      if (index >= scripts.length) return;
+      var script = document.createElement("script");
+      script.src = chrome.runtime.getURL(scripts[index]);
+      script.onload = function() {
+        script.remove();
+        injectNext(index + 1);
+      };
+      script.onerror = function() {
+        script.remove();
+        injectNext(index + 1);
+      };
+      (document.head || document.documentElement).prepend(script);
+    }
+
+    injectNext(0);
+
+    // ── Record visit in fingerprint history ──
+    try {
+      var history = data.pp_history || [];
+      var entry = {
+        domain: domain,
+        profileId: profile.id || (profile.os + '_' + (profile.browser || 'chrome')),
+        os: profile.os,
+        browser: profile.browser || 'Chrome',
+        ts: Date.now()
+      };
+      history.unshift(entry);
+      if (history.length > 200) history = history.slice(0, 200);
+      chrome.storage.local.set({ pp_history: history });
+    } catch(e) {}
   });
 
   // Listen for messages from popup/background

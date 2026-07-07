@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "PhantomPrint",
   "short_name": "PhantomPrint",
-  "version": "4.0.0",
-  "description": "Advanced browser fingerprint protection — spoof canvas, WebGL, audio, navigator, screen, fonts, WebRTC, timezone, and more with realistic, consistent profiles.",
+  "version": "5.0.0",
+  "description": "Advanced browser fingerprint protection — spoof canvas, WebGL, WebGPU, audio, navigator, screen, fonts, WebRTC, geolocation, timezone, and more with realistic, consistent profiles.",
   "permissions": [
     "storage",
     "tabs",
@@ -14,13 +14,15 @@
     "declarativeNetRequestWithHostAccess",
     "webNavigation",
     "alarms",
-    "notifications"
+    "notifications",
+    "proxy"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "background/service-worker.js"
+    "service_worker": "background/service-worker.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -54,7 +56,22 @@
       "resources": [
         "inject/inject.js",
         "inject/profiles.js",
-        "inject/prng.js"
+        "inject/prng.js",
+        "inject/webgpu-spoof.js",
+        "inject/extra-spoof.js",
+        "inject/canvas-spoof.js",
+        "inject/webgl-spoof.js",
+        "inject/audio-spoof.js",
+        "inject/navigator-spoof.js",
+        "inject/screen-spoof.js",
+        "inject/font-spoof.js",
+        "inject/webrtc-spoof.js",
+        "inject/timing-spoof.js",
+        "inject/storage-spoof.js",
+        "inject/media-spoof.js",
+        "inject/behavior-spoof.js",
+        "inject/main-world-inject.js",
+        "inject/profile-database.js"
       ],
       "matches": [
         "<all_urls>"
@@ -62,6 +79,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://* http://*;"
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://ipwho.is https://ipapi.co https://worldtimeapi.org http://ip-api.com;"
   }
 }

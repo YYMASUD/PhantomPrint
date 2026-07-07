@@ -3,83 +3,458 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhantomPrint Settings</title>
+  <title>PhantomPrint — Options</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
-  <div class="layout">
-    <nav class="sidebar">
-      <div class="sidebar-header">
-        <h1 class="sidebar-title">PhantomPrint</h1>
-        <span class="sidebar-version">v4.0</span>
+  <div class="pp-options">
+    <!-- Sidebar -->
+    <nav class="pp-sidebar">
+      <div class="pp-sidebar-logo">
+        <img src="../icons/icon48.png" alt="PhantomPrint" width="32" height="32">
+        <div>
+          <div class="pp-sidebar-title">PhantomPrint</div>
+          <div class="pp-sidebar-ver">v5.0.0</div>
+        </div>
       </div>
-      <ul class="nav-list">
-        <li class="nav-item active" data-tab="general">General</li>
-        <li class="nav-item" data-tab="modules">Modules</li>
-        <li class="nav-item" data-tab="profiles">Profiles</li>
-        <li class="nav-item" data-tab="whitelist">Whitelist</li>
-        <li class="nav-item" data-tab="advanced">Advanced</li>
+      <ul class="pp-nav">
+        <li class="pp-nav-item active" data-tab="profile">🎭 Profile</li>
+        <li class="pp-nav-item" data-tab="modules">🛡️ Modules</li>
+        <li class="pp-nav-item" data-tab="tracker">🚫 Tracker Blocker</li>
+        <li class="pp-nav-item" data-tab="proxy">🌐 Proxy</li>
+        <li class="pp-nav-item" data-tab="timezone">🕐 Timezone</li>
+        <li class="pp-nav-item" data-tab="whitelist">📋 Whitelist</li>
+        <li class="pp-nav-item" data-tab="sessions">💾 Sessions</li>
+        <li class="pp-nav-item" data-tab="history">📜 History</li>
+        <li class="pp-nav-item" data-tab="advanced">⚙️ Advanced</li>
       </ul>
+      <div class="pp-sidebar-footer">
+        <div class="pp-master-row">
+          <span>Protection</span>
+          <label class="pp-toggle-switch">
+            <input type="checkbox" id="masterToggle">
+            <span class="pp-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
     </nav>
-    <main class="content">
-      <!-- General -->
-      <section class="tab-panel active" id="tab-general">
-        <h2>General Settings</h2>
-        <div class="setting-card">
-          <div class="setting-row"><span>Master Enable</span><label class="toggle-switch"><input type="checkbox" id="opt-enabled" checked><span class="toggle-track"></span></label></div>
-          <div class="setting-row"><span>Noise Intensity</span><select id="opt-noise" class="select-input"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
-          <div class="setting-row"><span>Auto-Rotate</span><label class="toggle-switch"><input type="checkbox" id="opt-autorotate"><span class="toggle-track"></span></label></div>
-          <div class="setting-row"><span>Rotate Interval</span><select id="opt-interval" class="select-input"><option value="5">5 min</option><option value="15">15 min</option><option value="30" selected>30 min</option><option value="60">60 min</option></select></div>
+
+    <!-- Main Content -->
+    <main class="pp-main">
+      <!-- Notification -->
+      <div class="pp-notification" id="ppNotification" style="display:none">
+        <span id="ppNotifText"></span>
+        <button class="pp-notif-close" id="ppNotifClose">✕</button>
+      </div>
+
+      <!-- ═══ PROFILE TAB ═══ -->
+      <div class="pp-tab active" id="tab-profile">
+        <div class="pp-tab-header">
+          <h2>🎭 Fingerprint Profile</h2>
+          <p>Configure your browser fingerprint identity</p>
         </div>
-        <h3>Current Profile</h3>
-        <pre class="profile-display" id="opt-profile-display">Loading...</pre>
-        <div class="btn-row">
-          <button class="btn-primary" id="opt-randomize">Randomize Now</button>
-          <button class="btn-secondary" id="opt-reset">Reset to Defaults</button>
+
+        <div class="pp-card">
+          <div class="pp-card-title">Current Profile</div>
+          <div class="pp-profile-display" id="profileDisplay">
+            <div class="pp-profile-big-icon" id="bigProfileIcon">🖥️</div>
+            <div class="pp-profile-details">
+              <div class="pp-profile-ua" id="profileUA">Loading...</div>
+              <div class="pp-profile-meta" id="profileMeta">—</div>
+            </div>
+          </div>
+          <div class="pp-profile-grid" id="profileGrid">
+            <div class="pp-pg-item"><span class="pp-pg-label">OS</span><span class="pp-pg-val" id="pgOS">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">Browser</span><span class="pp-pg-val" id="pgBrowser">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">Screen</span><span class="pp-pg-val" id="pgScreen">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">GPU</span><span class="pp-pg-val" id="pgGPU">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">CPU Cores</span><span class="pp-pg-val" id="pgCores">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">RAM</span><span class="pp-pg-val" id="pgRAM">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">Language</span><span class="pp-pg-val" id="pgLang">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">Timezone</span><span class="pp-pg-val" id="pgTZ">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">Mobile</span><span class="pp-pg-val" id="pgMobile">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">Touch Points</span><span class="pp-pg-val" id="pgTouch">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">Color Depth</span><span class="pp-pg-val" id="pgColor">—</span></div>
+            <div class="pp-pg-item"><span class="pp-pg-label">DPR</span><span class="pp-pg-val" id="pgDPR">—</span></div>
+          </div>
         </div>
-      </section>
-      <!-- Modules -->
-      <section class="tab-panel" id="tab-modules">
-        <h2>Module Configuration</h2>
-        <div class="setting-card" id="opt-modules-list"></div>
-      </section>
-      <!-- Profiles -->
-      <section class="tab-panel" id="tab-profiles">
-        <h2>Profile Management</h2>
-        <div class="setting-card">
-          <div class="setting-row"><span>Preset</span><select id="opt-preset" class="select-input"><option value="Random">Random</option><option value="Windows Desktop">Windows</option><option value="Mac Desktop">macOS</option><option value="Linux Desktop">Linux</option></select></div>
+
+        <div class="pp-card">
+          <div class="pp-card-title">Generate New Profile</div>
+          <div class="pp-form-row">
+            <label class="pp-label">Profile Preset</label>
+            <select class="pp-select" id="profilePreset">
+              <option value="random">🎲 Random (any OS)</option>
+              <option value="windows">🪟 Windows Desktop</option>
+              <option value="macos">🍎 macOS Desktop</option>
+              <option value="linux">🐧 Linux Desktop</option>
+              <option value="android">🤖 Android Mobile</option>
+              <option value="mobile">📱 Any Mobile</option>
+            </select>
+          </div>
+          <div class="pp-form-row">
+            <label class="pp-label">Noise Level</label>
+            <select class="pp-select" id="noiseLevel">
+              <option value="low">Low — subtle changes</option>
+              <option value="medium" selected>Medium — balanced (recommended)</option>
+              <option value="high">High — maximum randomness</option>
+            </select>
+          </div>
+          <div class="pp-btn-row">
+            <button class="pp-btn pp-btn-primary" id="btnGenerate">🎲 Generate New Profile</button>
+            <button class="pp-btn pp-btn-secondary" id="btnExport">📤 Export</button>
+            <button class="pp-btn pp-btn-secondary" id="btnImport">📥 Import</button>
+            <input type="file" id="importFile" accept=".json" style="display:none">
+          </div>
         </div>
-        <h3>Export / Import</h3>
-        <div class="btn-row">
-          <button class="btn-primary" id="opt-export">Export Profile</button>
-          <button class="btn-secondary" id="opt-import-btn">Import Profile</button>
-          <input type="file" id="opt-import-file" accept=".json" style="display:none">
+
+        <div class="pp-card">
+          <div class="pp-card-title">Auto-Rotate</div>
+          <div class="pp-form-row">
+            <label class="pp-label">Auto-rotate fingerprint</label>
+            <label class="pp-toggle-switch">
+              <input type="checkbox" id="autoRotate">
+              <span class="pp-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="pp-form-row" id="rotateIntervalRow">
+            <label class="pp-label">Rotate every (minutes)</label>
+            <input type="number" class="pp-input" id="rotateInterval" min="1" max="1440" value="30">
+          </div>
+          <div class="pp-form-row">
+            <label class="pp-label">Rotate on new tab</label>
+            <label class="pp-toggle-switch">
+              <input type="checkbox" id="rotateOnNewTab">
+              <span class="pp-toggle-slider"></span>
+            </label>
+          </div>
         </div>
-      </section>
-      <!-- Whitelist -->
-      <section class="tab-panel" id="tab-whitelist">
-        <h2>Domain Whitelist</h2>
-        <p class="help-text">Domains listed here will not have fingerprint spoofing applied.</p>
-        <div class="wl-add-row"><input type="text" id="opt-wl-input" class="text-input" placeholder="example.com"><button class="btn-primary" id="opt-wl-add">Add</button></div>
-        <div class="setting-card" id="opt-wl-list"></div>
-      </section>
-      <!-- Advanced -->
-      <section class="tab-panel" id="tab-advanced">
-        <h2>Advanced Settings</h2>
-        <div class="setting-card">
-          <div class="setting-row"><span>Debug Mode</span><label class="toggle-switch"><input type="checkbox" id="opt-debug"><span class="toggle-track"></span></label></div>
+
+        <div class="pp-card">
+          <div class="pp-card-title">Test Your Fingerprint</div>
+          <p class="pp-card-desc">Open a fingerprint testing site to verify your protection is working.</p>
+          <div class="pp-test-grid">
+            <button class="pp-test-btn" data-site="browserleaks">BrowserLeaks</button>
+            <button class="pp-test-btn" data-site="amiunique">AmIUnique</button>
+            <button class="pp-test-btn" data-site="coveryourtracks">Cover Your Tracks</button>
+            <button class="pp-test-btn" data-site="pixelscan">PixelScan</button>
+            <button class="pp-test-btn" data-site="creepjs">CreepJS</button>
+            <button class="pp-test-btn" data-site="fingerprintjs">FingerprintJS</button>
+          </div>
         </div>
-        <h3>Fingerprint Test Sites</h3>
-        <div class="btn-row">
-          <button class="btn-secondary" id="opt-test-bl">BrowserLeaks</button>
-          <button class="btn-secondary" id="opt-test-ami">AmIUnique</button>
-          <button class="btn-secondary" id="opt-test-cyt">Cover Your Tracks</button>
+      </div>
+
+      <!-- ═══ MODULES TAB ═══ -->
+      <div class="pp-tab" id="tab-modules">
+        <div class="pp-tab-header">
+          <h2>🛡️ Protection Modules</h2>
+          <p>Enable or disable individual spoofing modules</p>
         </div>
-        <h3>Danger Zone</h3>
-        <button class="btn-danger" id="opt-factory-reset">Factory Reset</button>
-      </section>
+        <div class="pp-card">
+          <div class="pp-btn-row">
+            <button class="pp-btn pp-btn-secondary pp-btn-sm" id="btnEnableAll">✅ Enable All</button>
+            <button class="pp-btn pp-btn-secondary pp-btn-sm" id="btnDisableAll">❌ Disable All</button>
+          </div>
+          <div class="pp-modules-list" id="modulesList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TRACKER BLOCKER TAB ═══ -->
+      <div class="pp-tab" id="tab-tracker">
+        <div class="pp-tab-header">
+          <h2>🚫 Tracker Blocker</h2>
+          <p>Block analytics, ads, fingerprinting scripts, and session replay tools</p>
+        </div>
+        <div class="pp-card">
+          <div class="pp-form-row">
+            <label class="pp-label pp-label-lg">Enable Tracker Blocker</label>
+            <label class="pp-toggle-switch">
+              <input type="checkbox" id="tbEnabled">
+              <span class="pp-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="pp-card" id="tbListsCard">
+          <div class="pp-card-title">Block Lists</div>
+          <div class="pp-tb-list">
+            <div class="pp-tb-item">
+              <div class="pp-tb-info">
+                <div class="pp-tb-name">EasyPrivacy</div>
+                <div class="pp-tb-desc">Google Analytics, Facebook Pixel, Mixpanel, Amplitude, Hotjar, FullStory, Clarity, Sentry</div>
+              </div>
+              <label class="pp-toggle-switch"><input type="checkbox" class="tb-list-toggle" data-list="easyPrivacy"><span class="pp-toggle-slider"></span></label>
+            </div>
+            <div class="pp-tb-item">
+              <div class="pp-tb-info">
+                <div class="pp-tb-name">Peter Lowe's Ad List</div>
+                <div class="pp-tb-desc">Amazon Ads, Criteo, AppNexus, OpenX, Taboola, Outbrain, ShareThis, TradeDoubler</div>
+              </div>
+              <label class="pp-toggle-switch"><input type="checkbox" class="tb-list-toggle" data-list="peterLowe"><span class="pp-toggle-slider"></span></label>
+            </div>
+            <div class="pp-tb-item">
+              <div class="pp-tb-info">
+                <div class="pp-tb-name">Fingerprinting Scripts</div>
+                <div class="pp-tb-desc">FingerprintJS, iovation, ThreatMetrix, Signifyd, Sardine, Kount, Sift, Castle</div>
+              </div>
+              <label class="pp-toggle-switch"><input type="checkbox" class="tb-list-toggle" data-list="fingerprinting"><span class="pp-toggle-slider"></span></label>
+            </div>
+            <div class="pp-tb-item">
+              <div class="pp-tb-info">
+                <div class="pp-tb-name">Session Replay</div>
+                <div class="pp-tb-desc">Hotjar, FullStory, Mouseflow, LogRocket, Smartlook, Inspectlet, Glassbox, ContentSquare</div>
+              </div>
+              <label class="pp-toggle-switch"><input type="checkbox" class="tb-list-toggle" data-list="sessionReplay"><span class="pp-toggle-slider"></span></label>
+            </div>
+            <div class="pp-tb-item">
+              <div class="pp-tb-info">
+                <div class="pp-tb-name">Cryptominers</div>
+                <div class="pp-tb-desc">CoinHive, JSECoin, CryptoLoot, Minero, WebMR, AutohedMine</div>
+              </div>
+              <label class="pp-toggle-switch"><input type="checkbox" class="tb-list-toggle" data-list="cryptominers"><span class="pp-toggle-slider"></span></label>
+            </div>
+            <div class="pp-tb-item">
+              <div class="pp-tb-info">
+                <div class="pp-tb-name">Social Widgets</div>
+                <div class="pp-tb-desc">Twitter widgets, Pinterest, LinkedIn, VK, Disqus, AddToAny (may break social features)</div>
+              </div>
+              <label class="pp-toggle-switch"><input type="checkbox" class="tb-list-toggle" data-list="social"><span class="pp-toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PROXY TAB ═══ -->
+      <div class="pp-tab" id="tab-proxy">
+        <div class="pp-tab-header">
+          <h2>🌐 Proxy Manager</h2>
+          <p>Route traffic through a proxy server</p>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">Active Proxy</div>
+          <div class="pp-proxy-status" id="proxyStatus">
+            <span class="pp-status-dot" id="proxyDot"></span>
+            <span id="proxyStatusText">No proxy active</span>
+            <button class="pp-btn pp-btn-danger pp-btn-sm" id="btnDisableProxy" style="display:none">Disconnect</button>
+          </div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">Add Proxy</div>
+          <div class="pp-form-row">
+            <label class="pp-label">Protocol</label>
+            <select class="pp-select" id="proxyProtocol">
+              <option value="http">HTTP</option>
+              <option value="https">HTTPS</option>
+              <option value="socks4">SOCKS4</option>
+              <option value="socks5">SOCKS5</option>
+            </select>
+          </div>
+          <div class="pp-form-row">
+            <label class="pp-label">Host</label>
+            <input type="text" class="pp-input" id="proxyHost" placeholder="e.g. 127.0.0.1">
+          </div>
+          <div class="pp-form-row">
+            <label class="pp-label">Port</label>
+            <input type="number" class="pp-input" id="proxyPort" placeholder="e.g. 8080" min="1" max="65535">
+          </div>
+          <div class="pp-form-row">
+            <label class="pp-label">Label (optional)</label>
+            <input type="text" class="pp-input" id="proxyLabel" placeholder="e.g. US Proxy">
+          </div>
+          <div class="pp-btn-row">
+            <button class="pp-btn pp-btn-primary" id="btnAddProxy">➕ Add &amp; Connect</button>
+          </div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">Saved Proxies</div>
+          <div class="pp-proxy-list" id="proxyList">
+            <div class="pp-empty">No saved proxies</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TIMEZONE TAB ═══ -->
+      <div class="pp-tab" id="tab-timezone">
+        <div class="pp-tab-header">
+          <h2>🕐 Timezone &amp; Location</h2>
+          <p>Control how your timezone and language are reported</p>
+        </div>
+        <div class="pp-card">
+          <div class="pp-form-row">
+            <label class="pp-label pp-label-lg">Timezone Mode</label>
+          </div>
+          <div class="pp-radio-group" id="tzModeGroup">
+            <label class="pp-radio-item">
+              <input type="radio" name="tzMode" value="auto" checked>
+              <div class="pp-radio-content">
+                <div class="pp-radio-title">Auto (System)</div>
+                <div class="pp-radio-desc">Use your real system timezone — no spoofing</div>
+              </div>
+            </label>
+            <label class="pp-radio-item">
+              <input type="radio" name="tzMode" value="ip">
+              <div class="pp-radio-content">
+                <div class="pp-radio-title">Match IP Location</div>
+                <div class="pp-radio-desc">Automatically detect timezone from your IP address</div>
+              </div>
+            </label>
+            <label class="pp-radio-item">
+              <input type="radio" name="tzMode" value="profile">
+              <div class="pp-radio-content">
+                <div class="pp-radio-title">Use Profile Timezone</div>
+                <div class="pp-radio-desc">Use the timezone embedded in the fingerprint profile</div>
+              </div>
+            </label>
+            <label class="pp-radio-item">
+              <input type="radio" name="tzMode" value="custom">
+              <div class="pp-radio-content">
+                <div class="pp-radio-title">Custom Timezone</div>
+                <div class="pp-radio-desc">Manually specify a timezone</div>
+              </div>
+            </label>
+          </div>
+          <div class="pp-form-row" id="customTZRow" style="display:none">
+            <label class="pp-label">Custom Timezone</label>
+            <select class="pp-select" id="customTimezone">
+              <option value="America/New_York">America/New_York (EST/EDT)</option>
+              <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+              <option value="America/Denver">America/Denver (MST/MDT)</option>
+              <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+              <option value="America/Toronto">America/Toronto</option>
+              <option value="America/Vancouver">America/Vancouver</option>
+              <option value="America/Sao_Paulo">America/Sao_Paulo</option>
+              <option value="America/Mexico_City">America/Mexico_City</option>
+              <option value="Europe/London">Europe/London (GMT/BST)</option>
+              <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+              <option value="Europe/Berlin">Europe/Berlin</option>
+              <option value="Europe/Madrid">Europe/Madrid</option>
+              <option value="Europe/Rome">Europe/Rome</option>
+              <option value="Europe/Amsterdam">Europe/Amsterdam</option>
+              <option value="Europe/Moscow">Europe/Moscow</option>
+              <option value="Europe/Istanbul">Europe/Istanbul</option>
+              <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+              <option value="Asia/Seoul">Asia/Seoul (KST)</option>
+              <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+              <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+              <option value="Asia/Bangkok">Asia/Bangkok (ICT)</option>
+              <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+              <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+              <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
+              <option value="Pacific/Auckland">Pacific/Auckland (NZST)</option>
+              <option value="Africa/Cairo">Africa/Cairo (EET)</option>
+            </select>
+          </div>
+          <div class="pp-btn-row">
+            <button class="pp-btn pp-btn-primary" id="btnSaveTZ">💾 Save Timezone Settings</button>
+            <button class="pp-btn pp-btn-secondary" id="btnDetectIP">🌐 Detect from IP</button>
+          </div>
+          <div class="pp-ip-info" id="ipInfo" style="display:none">
+            <div class="pp-ip-row"><span>IP:</span><span id="ipAddr">—</span></div>
+            <div class="pp-ip-row"><span>Country:</span><span id="ipCountry">—</span></div>
+            <div class="pp-ip-row"><span>City:</span><span id="ipCity">—</span></div>
+            <div class="pp-ip-row"><span>Timezone:</span><span id="ipTZ">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ WHITELIST TAB ═══ -->
+      <div class="pp-tab" id="tab-whitelist">
+        <div class="pp-tab-header">
+          <h2>📋 Whitelist</h2>
+          <p>Sites where fingerprint spoofing is disabled</p>
+        </div>
+        <div class="pp-card">
+          <div class="pp-form-row">
+            <input type="text" class="pp-input" id="wlInput" placeholder="e.g. example.com">
+            <button class="pp-btn pp-btn-primary pp-btn-sm" id="btnAddWL">Add</button>
+          </div>
+          <div class="pp-whitelist" id="whitelistItems">
+            <div class="pp-empty">No whitelisted sites</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SESSIONS TAB ═══ -->
+      <div class="pp-tab" id="tab-sessions">
+        <div class="pp-tab-header">
+          <h2>💾 Profile Sessions</h2>
+          <p>Save and restore fingerprint configurations</p>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">Save Current Session</div>
+          <div class="pp-form-row">
+            <label class="pp-label">Session Name</label>
+            <input type="text" class="pp-input" id="sessionName" placeholder="e.g. Work Profile">
+          </div>
+          <div class="pp-btn-row">
+            <button class="pp-btn pp-btn-primary" id="btnSaveSession">💾 Save Session</button>
+          </div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">Saved Sessions</div>
+          <div class="pp-sessions-list" id="sessionsList">
+            <div class="pp-empty">No saved sessions</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ HISTORY TAB ═══ -->
+      <div class="pp-tab" id="tab-history">
+        <div class="pp-tab-header">
+          <h2>📜 Fingerprint History</h2>
+          <p>Sites visited with their applied fingerprint profiles</p>
+        </div>
+        <div class="pp-card">
+          <div class="pp-btn-row">
+            <button class="pp-btn pp-btn-danger pp-btn-sm" id="btnClearHistory">🗑️ Clear History</button>
+          </div>
+          <div class="pp-history-table" id="historyTable">
+            <div class="pp-empty">No history yet</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ADVANCED TAB ═══ -->
+      <div class="pp-tab" id="tab-advanced">
+        <div class="pp-tab-header">
+          <h2>⚙️ Advanced Settings</h2>
+          <p>Fine-tune PhantomPrint behavior</p>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">Behavior</div>
+          <div class="pp-form-row">
+            <label class="pp-label">Debug Mode (console logs)</label>
+            <label class="pp-toggle-switch">
+              <input type="checkbox" id="debugMode">
+              <span class="pp-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">Data Management</div>
+          <div class="pp-btn-row">
+            <button class="pp-btn pp-btn-secondary" id="btnExportAll">📤 Export All Settings</button>
+            <button class="pp-btn pp-btn-secondary" id="btnImportAll">📥 Import Settings</button>
+            <input type="file" id="importAllFile" accept=".json" style="display:none">
+          </div>
+          <div class="pp-btn-row" style="margin-top:8px">
+            <button class="pp-btn pp-btn-danger" id="btnResetAll">⚠️ Reset All Settings</button>
+          </div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-card-title">About</div>
+          <div class="pp-about">
+            <p><strong>PhantomPrint v5.0.0</strong></p>
+            <p>Advanced browser fingerprint protection extension.</p>
+            <p>Spoofs: Canvas, WebGL, WebGPU, Audio, Navigator, Screen, Fonts, WebRTC, Geolocation, Timezone, Battery, Speech, Media, Timing, Storage, Permissions, Keyboard Layout, CSS Media Queries, and more.</p>
+            <p style="margin-top:8px"><a href="https://github.com/cnmasud/PhantomPrint" target="_blank" class="pp-link">GitHub Repository</a></p>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
+
   <script src="options.js"></script>
 </body>
 </html>

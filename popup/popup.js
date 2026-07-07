@@ -1,389 +1,348 @@
-// PhantomPrint v4.0 — Popup Controller
-(function() {
-  'use strict';
+// PhantomPrint v5.0 — Popup Script
+'use strict';
 
-  // ═══════════════════════════════════════════════
-  // DOM References
-  // ═══════════════════════════════════════════════
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => document.querySelectorAll(sel);
+// ── Helpers ──────────────────────────────────────────────────
+function msg(action, data) {
+  return chrome.runtime.sendMessage({ action, ...data });
+}
 
-  let state = {};
+function notify(text, type = 'info', duration = 3000) {
+  const el = document.getElementById('ppNotification');
+  const textEl = document.getElementById('ppNotifText');
+  if (!el || !textEl) return;
+  textEl.textContent = text;
+  el.className = 'pp-notification ' + type;
+  el.style.display = 'flex';
+  if (notify._timer) clearTimeout(notify._timer);
+  if (duration > 0) {
+    notify._timer = setTimeout(() => { el.style.display = 'none'; }, duration);
+  }
+}
 
-  // ═══════════════════════════════════════════════
-  // Initialize on DOM ready
-  // ═══════════════════════════════════════════════
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      state = await sendMessage({ action: 'getState' });
-    } catch (e) {
-      state = {};
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return Math.floor(diff / 86400000) + 'd ago';
+}
+
+function getOSIcon(os) {
+  if (!os) return '🖥️';
+  const o = os.toLowerCase();
+  if (o.includes('windows')) return '🪟';
+  if (o.includes('mac') || o.includes('ios')) return '🍎';
+  if (o.includes('android')) return '🤖';
+  if (o.includes('linux')) return '🐧';
+  return '🖥️';
+}
+
+function shortGPU(renderer) {
+  if (!renderer) return '—';
+  // Extract GPU model from ANGLE string
+  const m = renderer.match(/ANGLE \([^,]+,\s*([^,]+)/);
+  if (m) {
+    return m[1].replace('NVIDIA GeForce ', '').replace('AMD Radeon ', '').replace('Intel(R) ', '').replace(' Direct3D11 vs_5_0 ps_5_0', '').replace(' Direct3D11', '').trim().slice(0, 18);
+  }
+  return renderer.slice(0, 18);
+}
+
+// ── State ────────────────────────────────────────────────────
+let state = null;
+let currentDomain = '';
+let historyVisible = false;
+
+// ── Init ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  // Get current tab domain
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.url) {
+      try { currentDomain = new URL(tab.url).hostname; } catch(e) {}
     }
-    renderState();
-    bindEvents();
+  } catch(e) {}
+
+  // Load state
+  await loadState();
+
+  // Wire up events
+  wireEvents();
+});
+
+async function loadState() {
+  try {
+    state = await msg('getState');
+    renderUI();
+  } catch(e) {
+    notify('Failed to load state: ' + e.message, 'error');
+  }
+}
+
+function renderUI() {
+  if (!state) return;
+
+  const popup = document.querySelector('.pp-popup');
+  const masterToggle = document.getElementById('masterToggle');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const statusDomain = document.getElementById('statusDomain');
+
+  // Master toggle
+  masterToggle.checked = state.isEnabled !== false;
+
+  // Check whitelist
+  const whitelist = state.whitelist || [];
+  const isWhitelisted = currentDomain && whitelist.some(d => currentDomain === d || currentDomain.endsWith('.' + d));
+
+  // Status
+  if (!state.isEnabled) {
+    statusDot.className = 'pp-status-dot inactive';
+    statusText.textContent = 'Protection disabled';
+    popup.classList.add('disabled');
+  } else if (isWhitelisted) {
+    statusDot.className = 'pp-status-dot whitelisted';
+    statusText.textContent = 'Site whitelisted';
+    popup.classList.remove('disabled');
+  } else {
+    statusDot.className = 'pp-status-dot active';
+    statusText.textContent = 'Active — fingerprint spoofed';
+    popup.classList.remove('disabled');
+  }
+
+  statusDomain.textContent = currentDomain || '';
+
+  // Profile card
+  const profile = state.fingerprintProfile;
+  if (profile) {
+    document.getElementById('profileIcon').textContent = getOSIcon(profile.os);
+    document.getElementById('profileName').textContent = profile.userAgent
+      ? profile.userAgent.replace('Mozilla/5.0 ', '').slice(0, 50)
+      : (profile.os + ' — ' + (profile.browser || 'Chrome'));
+    document.getElementById('profileSub').textContent =
+      (profile.os || '?') + ' · ' + (profile.browser || 'Chrome') + ' · ' + (profile.language || 'en-US');
+
+    // Stats
+    document.getElementById('statOS').textContent = profile.os || '—';
+    document.getElementById('statGPU').textContent = shortGPU(profile.gpu && profile.gpu.renderer ? profile.gpu.renderer : (profile.gpu || ''));
+    const scr = profile.screen;
+    document.getElementById('statScreen').textContent = scr ? scr.width + '×' + scr.height : '—';
+    document.getElementById('statCores').textContent = profile.hardwareConcurrency || '—';
+    document.getElementById('statRAM').textContent = profile.deviceMemory ? profile.deviceMemory + 'GB' : '—';
+    const tz = profile.timezone;
+    document.getElementById('statTZ').textContent = tz ? (tz.zone || tz).toString().split('/').pop() : '—';
+  }
+
+  // Modules
+  const modules = state.modules || {};
+  document.querySelectorAll('.module-toggle').forEach(input => {
+    const mod = input.dataset.module;
+    const enabled = modules[mod] !== false;
+    input.checked = enabled;
+    const card = input.closest('.pp-module');
+    if (card) {
+      card.classList.toggle('active', enabled);
+      card.classList.toggle('inactive', !enabled);
+    }
   });
 
-  // ═══════════════════════════════════════════════
-  // Message helper
-  // ═══════════════════════════════════════════════
-  function sendMessage(msg) {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(msg, (response) => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve(response);
-        }
-      });
-    });
+  // Whitelist button text
+  const btnWL = document.getElementById('btnWhitelist');
+  if (btnWL) {
+    btnWL.textContent = isWhitelisted ? '✅ Remove from Whitelist' : '🚫 Whitelist Site';
   }
+}
 
-  // ═══════════════════════════════════════════════
-  // Render current state to UI
-  // ═══════════════════════════════════════════════
-  function renderState() {
-    // Master toggle
-    const masterToggle = $('#master-toggle');
-    const overlay = $('#disabled-overlay');
-    masterToggle.checked = state.isEnabled !== false;
-    overlay.classList.toggle('active', !masterToggle.checked);
-
-    // Profile info
-    const p = state.fingerprintProfile;
-    if (p) {
-      const chromeMatch = (p.userAgent || '').match(/Chrome\/(\d+)/);
-      const browserStr = chromeMatch ? 'Chrome ' + chromeMatch[1] : 'Browser';
-      $('#pf-browser').textContent = browserStr;
-      $('#pf-os').textContent = p.os || 'Unknown';
-      $('#pf-screen').textContent = p.screen ? p.screen.width + '\u00D7' + p.screen.height : '-';
-      const gpuShort = (p.gpu && p.gpu.renderer) ? p.gpu.renderer.replace(/ANGLE \(.*?,\s*/, '').replace(/\s*Direct3D.*/, '').replace(/\s*OpenGL.*/, '') : '-';
-      $('#pf-gpu').textContent = gpuShort;
-    }
-
-    // Module toggles
-    const modules = state.modules || {};
-    $$('.module-card').forEach((card) => {
-      const mod = card.dataset.module;
-      const cb = card.querySelector('input[type="checkbox"]');
-      const isOn = modules[mod] !== false;
-      cb.checked = isOn;
-      card.classList.toggle('active', isOn);
-      card.classList.toggle('inactive', !isOn);
-    });
-
-    // Advanced section
-    if (state.autoRotate) $('#auto-rotate-toggle').checked = true;
-    if (state.autoRotateInterval) $('#rotate-interval').value = String(state.autoRotateInterval);
-    if (state.profilePreset) $('#profile-preset').value = state.profilePreset;
-    if (state.noiseLevel) $('#noise-level').value = state.noiseLevel;
-
-    // Protection score
-    updateProtectionScore();
-  }
-
-  // ═══════════════════════════════════════════════
-  // Protection score calculation
-  // ═══════════════════════════════════════════════
-  function updateProtectionScore() {
-    const modules = state.modules || {};
-    const allMods = ['canvas','webgl','audio','navigator','screen','fonts','webrtc','timezone','rects','battery','media','speech'];
-    const activeCount = allMods.filter(m => modules[m] !== false).length;
-    const total = allMods.length;
-    const pct = Math.round((activeCount / total) * 100);
-
-    // Has profile?
-    const hasProfile = !!state.fingerprintProfile;
-    const finalPct = hasProfile ? pct : Math.round(pct * 0.5);
-
-    $('#score-value').textContent = finalPct + '%';
-    $('#score-detail').textContent = activeCount + '/' + total + ' modules active';
-
-    // Update ring
-    const circumference = 213.6; // 2 * PI * 34
-    const offset = circumference - (circumference * finalPct / 100);
-    const ring = $('#score-ring-fill');
-    if (ring) ring.style.strokeDashoffset = offset;
-
-    // Color coding
-    const scoreEl = $('#score-value');
-    if (finalPct >= 70) {
-      scoreEl.style.color = 'var(--accent)';
-    } else if (finalPct >= 40) {
-      scoreEl.style.color = 'var(--warning)';
-    } else {
-      scoreEl.style.color = 'var(--danger)';
-    }
-  }
-
-  // ═══════════════════════════════════════════════
-  // Bind all event listeners
-  // ═══════════════════════════════════════════════
-  function bindEvents() {
-    // Master toggle
-    $('#master-toggle').addEventListener('change', async (e) => {
-      const enabled = e.target.checked;
-      await sendMessage({ action: 'toggleEnabled', enabled });
+function wireEvents() {
+  // Master toggle
+  document.getElementById('masterToggle').addEventListener('change', async (e) => {
+    const enabled = e.target.checked;
+    try {
+      await msg('toggleEnabled', { enabled });
       state.isEnabled = enabled;
-      $('#disabled-overlay').classList.toggle('active', !enabled);
-    });
+      renderUI();
+      notify(enabled ? '✅ Protection enabled' : '⚠️ Protection disabled', enabled ? 'success' : 'warning');
+    } catch(err) {
+      notify('Error: ' + err.message, 'error');
+    }
+  });
 
-    // ONE-CLICK RANDOMIZE
-    const randomizeBtn = $('#randomize-all-btn');
-    randomizeBtn.addEventListener('click', async () => {
-      randomizeBtn.classList.add('loading');
-      randomizeBtn.disabled = true;
-
+  // Module toggles
+  document.querySelectorAll('.module-toggle').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const mod = e.target.dataset.module;
+      const enabled = e.target.checked;
       try {
-        const preset = $('#profile-preset').value || 'Random';
-        const response = await sendMessage({ action: 'randomizeAll', preset });
-
-        if (response && response.profile) {
-          state.fingerprintProfile = response.profile;
-          state.isEnabled = true;
-        }
-
-        // Refresh full state
-        state = await sendMessage({ action: 'getState' });
-
-        randomizeBtn.classList.remove('loading');
-        randomizeBtn.classList.add('success');
-        const btnText = randomizeBtn.querySelector('.btn-text');
-        const btnIcon = randomizeBtn.querySelector('.btn-icon');
-        btnText.textContent = '\u2713 Randomized!';
-        btnIcon.textContent = '\u2713';
-
-        renderState();
-
-        setTimeout(() => {
-          randomizeBtn.classList.remove('success');
-          btnText.textContent = 'ONE-CLICK RANDOMIZE ALL';
-          btnIcon.textContent = '\u{1F3B2}';
-          randomizeBtn.disabled = false;
-        }, 1500);
-      } catch (error) {
-        console.error('Randomization failed:', error);
-        randomizeBtn.classList.remove('loading');
-        randomizeBtn.classList.add('error');
-        const btnText = randomizeBtn.querySelector('.btn-text');
-        btnText.textContent = '\u26A0 Error - Retry';
-        randomizeBtn.disabled = false;
-        setTimeout(() => {
-          randomizeBtn.classList.remove('error');
-          btnText.textContent = 'ONE-CLICK RANDOMIZE ALL';
-        }, 2000);
-      }
-    });
-
-    // Module toggles
-    $$('.module-card input[type="checkbox"]').forEach((cb) => {
-      cb.addEventListener('change', async (e) => {
-        const card = e.target.closest('.module-card');
-        const mod = card.dataset.module;
-        const enabled = e.target.checked;
-        card.classList.toggle('active', enabled);
-        card.classList.toggle('inactive', !enabled);
-
-        await sendMessage({ action: 'toggleModule', module: mod, enabled });
+        await msg('toggleModule', { module: mod, enabled });
         if (!state.modules) state.modules = {};
         state.modules[mod] = enabled;
-        updateProtectionScore();
-      });
-    });
-
-    // Advanced toggle
-    $('#advanced-toggle').addEventListener('click', () => {
-      const section = $('#advanced-section');
-      const chevron = $('#advanced-chevron');
-      section.classList.toggle('open');
-      chevron.classList.toggle('open');
-    });
-
-    // Auto-rotate
-    $('#auto-rotate-toggle').addEventListener('change', async (e) => {
-      const interval = parseInt($('#rotate-interval').value) || 30;
-      await sendMessage({ action: 'setAutoRotate', enabled: e.target.checked, interval });
-    });
-
-    $('#rotate-interval').addEventListener('change', async (e) => {
-      const autoOn = $('#auto-rotate-toggle').checked;
-      if (autoOn) {
-        await sendMessage({ action: 'setAutoRotate', enabled: true, interval: parseInt(e.target.value) });
+        renderUI();
+        notify((enabled ? '✅ ' : '❌ ') + mod + ' module ' + (enabled ? 'enabled' : 'disabled'), enabled ? 'success' : 'warning', 2000);
+      } catch(err) {
+        notify('Error: ' + err.message, 'error');
       }
     });
+    // Prevent card click from double-firing
+    input.addEventListener('click', e => e.stopPropagation());
+  });
 
-    // Profile preset
-    $('#profile-preset').addEventListener('change', async (e) => {
-      await sendMessage({ action: 'setProfilePreset', preset: e.target.value });
-    });
-
-    // Noise level
-    $('#noise-level').addEventListener('change', async (e) => {
-      await sendMessage({ action: 'setNoiseLevel', level: e.target.value });
-    });
-
-    // Action buttons
-    $('#btn-view').addEventListener('click', () => {
-      if (state.fingerprintProfile) {
-        const p = state.fingerprintProfile;
-        const info = [
-          'ID: ' + (p.id || '-'),
-          'UA: ' + (p.userAgent || '-'),
-          'Platform: ' + (p.platform || '-'),
-          'Screen: ' + (p.screen ? p.screen.width + 'x' + p.screen.height : '-'),
-          'GPU: ' + (p.gpu ? p.gpu.renderer : '-'),
-          'Cores: ' + (p.hardwareConcurrency || '-'),
-          'Memory: ' + (p.deviceMemory || '-') + 'GB',
-          'TZ: ' + (p.timezone ? p.timezone.zone : '-'),
-          'Lang: ' + (p.language || '-')
-        ].join('\n');
-        alert(info);
+  // Module card click = toggle
+  document.querySelectorAll('.pp-module').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.pp-mini-toggle')) return;
+      const input = card.querySelector('.module-toggle');
+      if (input) {
+        input.checked = !input.checked;
+        input.dispatchEvent(new Event('change'));
       }
     });
+  });
 
-    $('#btn-test').addEventListener('click', async () => {
-      await sendMessage({ action: 'openTestSite', site: 'browserleaks' });
-    });
-
-    $('#btn-export').addEventListener('click', async () => {
-      const result = await sendMessage({ action: 'exportProfile' });
-      if (result && result.data) {
-        const blob = new Blob([result.data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'phantomprint-profile.json';
-        a.click();
-        URL.revokeObjectURL(url);
+  // Randomize button (quick)
+  document.getElementById('btnRandomize').addEventListener('click', async () => {
+    try {
+      document.getElementById('btnRandomize').textContent = '⏳';
+      const result = await msg('randomizeAll', { preset: state.profilePreset || 'random' });
+      if (result && result.profile) {
+        state.fingerprintProfile = result.profile;
+        renderUI();
+        notify('🎲 New fingerprint applied!', 'success');
       }
-    });
+    } catch(err) {
+      notify('Error: ' + err.message, 'error');
+    } finally {
+      document.getElementById('btnRandomize').textContent = '🔀';
+    }
+  });
 
-    $('#btn-import').addEventListener('click', () => {
-      $('#import-file').click();
-    });
+  // Copy profile info
+  document.getElementById('btnCopy').addEventListener('click', async () => {
+    const profile = state && state.fingerprintProfile;
+    if (!profile) return;
+    const info = [
+      'OS: ' + (profile.os || '?'),
+      'UA: ' + (profile.userAgent || '?'),
+      'Screen: ' + (profile.screen ? profile.screen.width + 'x' + profile.screen.height : '?'),
+      'GPU: ' + (profile.gpu && profile.gpu.renderer ? profile.gpu.renderer : '?'),
+      'Cores: ' + (profile.hardwareConcurrency || '?'),
+      'RAM: ' + (profile.deviceMemory || '?') + 'GB',
+      'TZ: ' + (profile.timezone ? (profile.timezone.zone || profile.timezone) : '?'),
+      'Lang: ' + (profile.language || '?')
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(info);
+      notify('📋 Profile info copied!', 'success', 2000);
+    } catch(e) {
+      notify('Copy failed', 'error');
+    }
+  });
 
-    $('#import-file').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const text = await file.text();
-      const result = await sendMessage({ action: 'importProfile', data: text });
-      if (result && result.success) {
-        state = await sendMessage({ action: 'getState' });
-        renderState();
-        alert('Profile imported successfully!');
+  // New Profile button
+  document.getElementById('btnNewProfile').addEventListener('click', async () => {
+    const btn = document.getElementById('btnNewProfile');
+    btn.textContent = '⏳ Generating...';
+    btn.disabled = true;
+    try {
+      const result = await msg('randomizeAll', { preset: state.profilePreset || 'random' });
+      if (result && result.profile) {
+        state.fingerprintProfile = result.profile;
+        renderUI();
+        notify('🎲 New fingerprint profile applied! Reload tabs to apply.', 'success', 4000);
+      }
+    } catch(err) {
+      notify('Error: ' + err.message, 'error');
+    } finally {
+      btn.textContent = '🎲 New Profile';
+      btn.disabled = false;
+    }
+  });
+
+  // Whitelist button
+  document.getElementById('btnWhitelist').addEventListener('click', async () => {
+    if (!currentDomain) {
+      notify('No domain detected', 'warning');
+      return;
+    }
+    const whitelist = state.whitelist || [];
+    const isWhitelisted = whitelist.some(d => currentDomain === d || currentDomain.endsWith('.' + d));
+    try {
+      if (isWhitelisted) {
+        await msg('removeFromWhitelist', { domain: currentDomain });
+        state.whitelist = whitelist.filter(d => d !== currentDomain);
+        notify('✅ Removed from whitelist: ' + currentDomain, 'success');
       } else {
-        alert('Import failed: ' + (result.error || 'Unknown error'));
+        await msg('addToWhitelist', { domain: currentDomain });
+        state.whitelist = [...whitelist, currentDomain];
+        notify('🚫 Whitelisted: ' + currentDomain, 'warning');
       }
-      e.target.value = '';
-    });
-
-    // Settings
-    $('#btn-settings').addEventListener('click', () => {
-      chrome.runtime.openOptionsPage();
-    });
-
-    // Whitelist
-    $('#whitelist-btn').addEventListener('click', () => {
-      $('#whitelist-modal').classList.add('active');
-      loadWhitelist();
-    });
-
-    $('#whitelist-close').addEventListener('click', () => {
-      $('#whitelist-modal').classList.remove('active');
-    });
-
-    
-    // Timezone mode — with IP-based auto-sync
-    var tzModeEl = document.getElementById('tz-mode');
-    var tzDetectRow = document.getElementById('tz-detect-row');
-    var tzCurrentRow = document.getElementById('tz-current-row');
-    var tzWarning = document.getElementById('tz-warning');
-
-    if (tzModeEl) {
-      if (state.timezoneMode) tzModeEl.value = state.timezoneMode;
-
-      function updateTzUI() {
-        var mode = tzModeEl.value;
-        var showDetect = (mode === 'ip' || mode === 'custom');
-        if (tzDetectRow) tzDetectRow.style.display = showDetect ? 'flex' : 'none';
-        var hasLoc = state.ipLocation || state.customTimezone;
-        if (tzCurrentRow) tzCurrentRow.style.display = (showDetect && hasLoc) ? 'flex' : 'none';
-        if (tzWarning) tzWarning.style.display = (mode !== 'auto') ? 'block' : 'none';
-        // Show detected info
-        var tzVal = document.getElementById('tz-current-value');
-        if (tzVal) {
-          if (state.ipLocation && state.ipLocation.timezone) {
-            tzVal.textContent = state.ipLocation.timezone.zone + ' (' + (state.ipLocation.country || '') + ') — lang: ' + (state.ipLocation.languages ? state.ipLocation.languages[0] : '-');
-          } else if (state.customTimezone) {
-            tzVal.textContent = state.customTimezone.zone || '-';
-          }
-        }
-      }
-      updateTzUI();
-
-      tzModeEl.addEventListener('change', async function(e) {
-        var mode = e.target.value;
-        await sendMessage({ action: 'setTimezoneMode', mode: mode });
-        state.timezoneMode = mode;
-        // Auto-detect when switching to IP mode
-        if (mode === 'ip' && !state.ipLocation) {
-          var tzDetectBtn2 = document.getElementById('tz-detect-btn');
-          if (tzDetectBtn2) tzDetectBtn2.click();
-        }
-        updateTzUI();
-      });
+      renderUI();
+    } catch(err) {
+      notify('Error: ' + err.message, 'error');
     }
+  });
 
-    var tzDetectBtn = document.getElementById('tz-detect-btn');
-    if (tzDetectBtn) {
-      tzDetectBtn.addEventListener('click', async function() {
-        tzDetectBtn.textContent = 'Detecting...';
-        tzDetectBtn.disabled = true;
-        try {
-          var result = await sendMessage({ action: 'autoDetectTimezone' });
-          if (result && result.success && result.ipLocation) {
-            state.ipLocation = result.ipLocation;
-            state.customTimezone = result.ipLocation.timezone;
-            updateTzUI();
-            tzDetectBtn.textContent = '\u2713 ' + result.ipLocation.timezone.zone;
-          } else {
-            tzDetectBtn.textContent = 'Failed - Retry';
-          }
-        } catch(e) {
-          tzDetectBtn.textContent = 'Error - Retry';
-        }
-        setTimeout(function() { tzDetectBtn.textContent = 'Detect from IP'; tzDetectBtn.disabled = false; }, 2500);
-      });
+  // Notification close
+  document.getElementById('ppNotifClose').addEventListener('click', () => {
+    document.getElementById('ppNotification').style.display = 'none';
+  });
+
+  // Options button
+  document.getElementById('btnOptions').addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
+
+  // Test button
+  document.getElementById('btnTest').addEventListener('click', async () => {
+    await msg('openTestSite', { site: 'browserleaks' });
+    window.close();
+  });
+
+  // History button
+  document.getElementById('btnHistory').addEventListener('click', async () => {
+    historyVisible = !historyVisible;
+    const panel = document.getElementById('historyPanel');
+    if (historyVisible) {
+      panel.style.display = 'block';
+      await loadHistory();
+    } else {
+      panel.style.display = 'none';
     }
+  });
 
-    $('#wl-add-btn').addEventListener('click', async () => {
-      const input = $('#wl-domain-input');
-      const domain = input.value.trim();
-      if (domain) {
-        await sendMessage({ action: 'addToWhitelist', domain });
-        input.value = '';
-        loadWhitelist();
-      }
-    });
+  // History close
+  document.getElementById('historyClose').addEventListener('click', () => {
+    historyVisible = false;
+    document.getElementById('historyPanel').style.display = 'none';
+  });
+
+  // Clear history
+  document.getElementById('btnClearHistory').addEventListener('click', async () => {
+    try {
+      await msg('clearHistory');
+      document.getElementById('historyList').innerHTML = '<div class="pp-empty">History cleared</div>';
+      notify('📜 History cleared', 'success', 2000);
+    } catch(e) {
+      notify('Error: ' + e.message, 'error');
+    }
+  });
+}
+
+async function loadHistory() {
+  const list = document.getElementById('historyList');
+  try {
+    const result = await msg('getHistory');
+    const history = result.history || [];
+    if (history.length === 0) {
+      list.innerHTML = '<div class="pp-empty">No history yet</div>';
+      return;
+    }
+    list.innerHTML = history.slice(0, 30).map(entry => `
+      <div class="pp-history-item">
+        <span class="pp-history-domain">${entry.domain || '?'}</span>
+        <span class="pp-history-profile">${entry.os || '?'}</span>
+        <span class="pp-history-time">${timeAgo(entry.ts)}</span>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="pp-empty">Failed to load history</div>';
   }
-
-  // ═══════════════════════════════════════════════
-  // Whitelist management
-  // ═══════════════════════════════════════════════
-  async function loadWhitelist() {
-    const result = await sendMessage({ action: 'getWhitelist' });
-    const list = $('#wl-list');
-    list.innerHTML = '';
-    const whitelist = result.whitelist || [];
-    whitelist.forEach((domain) => {
-      const item = document.createElement('div');
-      item.className = 'wl-item';
-      item.innerHTML = '<span class="wl-item-domain">' + domain + '</span><button class="wl-item-remove" data-domain="' + domain + '">\u2715</button>';
-      item.querySelector('.wl-item-remove').addEventListener('click', async () => {
-        await sendMessage({ action: 'removeFromWhitelist', domain });
-        loadWhitelist();
-      });
-      list.appendChild(item);
-    });
-  }
-
-})();
+}

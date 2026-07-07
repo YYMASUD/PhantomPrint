@@ -2,111 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=380">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PhantomPrint</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header class="header">
-    <div class="header-left">
-      <div class="logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="url(#g1)" stroke-width="2" fill="none"/>
-          <circle cx="12" cy="12" r="5" fill="url(#g1)" opacity="0.8"/>
-          <circle cx="12" cy="12" r="2" fill="#0a0a0f"/>
-          <defs><linearGradient id="g1" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#00ff88"/><stop offset="1" stop-color="#00d4ff"/></linearGradient></defs>
-        </svg>
+  <div class="pp-popup">
+    <!-- Header -->
+    <div class="pp-header">
+      <div class="pp-logo">
+        <img src="../icons/icon48.png" alt="PhantomPrint" width="24" height="24">
+        <span class="pp-title">PhantomPrint</span>
       </div>
-      <div class="header-title">
-        <span class="title-text">PhantomPrint</span>
-        <span class="version-badge">v4.0</span>
+      <div class="pp-header-right">
+        <span class="pp-version">v5.0</span>
+        <label class="pp-toggle-switch" title="Enable/Disable PhantomPrint">
+          <input type="checkbox" id="masterToggle">
+          <span class="pp-toggle-slider"></span>
+        </label>
       </div>
     </div>
-    <label class="master-toggle">
-      <input type="checkbox" id="master-toggle" checked>
-      <span class="toggle-slider"></span>
-    </label>
-  </header>
-  <div class="disabled-overlay" id="disabled-overlay">
-    <div class="disabled-msg">Protection Disabled</div>
+
+    <!-- Status Bar -->
+    <div class="pp-status-bar" id="statusBar">
+      <span class="pp-status-dot" id="statusDot"></span>
+      <span id="statusText">Loading...</span>
+      <span class="pp-status-domain" id="statusDomain"></span>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="pp-profile-card" id="profileCard">
+      <div class="pp-profile-header">
+        <div class="pp-profile-icon" id="profileIcon">🖥️</div>
+        <div class="pp-profile-info">
+          <div class="pp-profile-name" id="profileName">Loading...</div>
+          <div class="pp-profile-sub" id="profileSub">—</div>
+        </div>
+        <div class="pp-profile-actions">
+          <button class="pp-btn-icon" id="btnRandomize" title="New Random Fingerprint">🔀</button>
+          <button class="pp-btn-icon" id="btnCopy" title="Copy Profile Info">📋</button>
+        </div>
+      </div>
+      <div class="pp-profile-stats" id="profileStats">
+        <div class="pp-stat"><span class="pp-stat-label">OS</span><span class="pp-stat-val" id="statOS">—</span></div>
+        <div class="pp-stat"><span class="pp-stat-label">GPU</span><span class="pp-stat-val" id="statGPU">—</span></div>
+        <div class="pp-stat"><span class="pp-stat-label">Screen</span><span class="pp-stat-val" id="statScreen">—</span></div>
+        <div class="pp-stat"><span class="pp-stat-label">Cores</span><span class="pp-stat-val" id="statCores">—</span></div>
+        <div class="pp-stat"><span class="pp-stat-label">RAM</span><span class="pp-stat-val" id="statRAM">—</span></div>
+        <div class="pp-stat"><span class="pp-stat-label">TZ</span><span class="pp-stat-val" id="statTZ">—</span></div>
+      </div>
+    </div>
+
+    <!-- Quick Modules -->
+    <div class="pp-section-title">Protection Modules</div>
+    <div class="pp-modules-grid" id="modulesGrid">
+      <div class="pp-module" data-module="canvas">
+        <span class="pp-module-icon">🎨</span>
+        <span class="pp-module-name">Canvas</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="canvas"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="webgl">
+        <span class="pp-module-icon">🔷</span>
+        <span class="pp-module-name">WebGL</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="webgl"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="webgpu">
+        <span class="pp-module-icon">⚡</span>
+        <span class="pp-module-name">WebGPU</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="webgpu"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="audio">
+        <span class="pp-module-icon">🔊</span>
+        <span class="pp-module-name">Audio</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="audio"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="navigator">
+        <span class="pp-module-icon">🧭</span>
+        <span class="pp-module-name">Navigator</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="navigator"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="fonts">
+        <span class="pp-module-icon">🔤</span>
+        <span class="pp-module-name">Fonts</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="fonts"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="webrtc">
+        <span class="pp-module-icon">📡</span>
+        <span class="pp-module-name">WebRTC</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="webrtc"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="geolocation">
+        <span class="pp-module-icon">📍</span>
+        <span class="pp-module-name">GeoLoc</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="geolocation"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="timezone">
+        <span class="pp-module-icon">🕐</span>
+        <span class="pp-module-name">Timezone</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="timezone"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="screen">
+        <span class="pp-module-icon">🖥️</span>
+        <span class="pp-module-name">Screen</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="screen"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="battery">
+        <span class="pp-module-icon">🔋</span>
+        <span class="pp-module-name">Battery</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="battery"><span></span></label>
+      </div>
+      <div class="pp-module" data-module="timing">
+        <span class="pp-module-icon">⏱️</span>
+        <span class="pp-module-name">Timing</span>
+        <label class="pp-mini-toggle"><input type="checkbox" class="module-toggle" data-module="timing"><span></span></label>
+      </div>
+    </div>
+
+    <!-- Inline Notification Panel (replaces alert()) -->
+    <div class="pp-notification" id="ppNotification" style="display:none">
+      <span id="ppNotifText"></span>
+      <button class="pp-notif-close" id="ppNotifClose">✕</button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="pp-actions">
+      <button class="pp-btn pp-btn-primary" id="btnNewProfile">
+        🎲 New Profile
+      </button>
+      <button class="pp-btn pp-btn-secondary" id="btnWhitelist">
+        🚫 Whitelist Site
+      </button>
+    </div>
+
+    <!-- Footer Links -->
+    <div class="pp-footer">
+      <button class="pp-footer-btn" id="btnOptions">⚙️ Options</button>
+      <button class="pp-footer-btn" id="btnTest">🧪 Test</button>
+      <button class="pp-footer-btn" id="btnHistory">📜 History</button>
+    </div>
+
+    <!-- History Panel (inline) -->
+    <div class="pp-panel" id="historyPanel" style="display:none">
+      <div class="pp-panel-header">
+        <span>📜 Recent Activity</span>
+        <button class="pp-panel-close" id="historyClose">✕</button>
+      </div>
+      <div class="pp-history-list" id="historyList">
+        <div class="pp-empty">No history yet</div>
+      </div>
+      <button class="pp-btn pp-btn-danger pp-btn-sm" id="btnClearHistory">Clear History</button>
+    </div>
   </div>
-  <main class="main-content" id="main-content">
-    
-    <div class="tz-warning" id="tz-warning" style="display:none;background:rgba(255,170,0,0.1);border:1px solid var(--warning);border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:var(--warning)">
-      ⚠️ Timezone must match your IP location. Mismatch = instant detection.
-    </div>
-    <button class="randomize-btn" id="randomize-all-btn">
-      <span class="btn-icon">🎲</span>
-      <span class="btn-text">ONE-CLICK RANDOMIZE ALL</span>
-      <span class="btn-spinner"></span>
-    </button>
-    <div class="score-section">
-      <div class="score-ring">
-        <svg viewBox="0 0 80 80">
-          <circle cx="40" cy="40" r="34" class="score-bg"/>
-          <circle cx="40" cy="40" r="34" class="score-fill" id="score-ring-fill" stroke-dasharray="213.6" stroke-dashoffset="21.36"/>
-        </svg>
-        <div class="score-value" id="score-value">90%</div>
-      </div>
-      <div class="score-info">
-        <div class="score-label">Protection Score</div>
-        <div class="score-detail" id="score-detail">12/15 modules active</div>
-      </div>
-    </div>
-    <div class="profile-card" id="profile-card">
-      <div class="profile-row"><span class="profile-label">Browser</span><span class="profile-value" id="pf-browser">Chrome 125</span></div>
-      <div class="profile-row"><span class="profile-label">OS</span><span class="profile-value" id="pf-os">Windows 10</span></div>
-      <div class="profile-row"><span class="profile-label">Screen</span><span class="profile-value" id="pf-screen">1920×1080</span></div>
-      <div class="profile-row"><span class="profile-label">GPU</span><span class="profile-value" id="pf-gpu">RTX 3060</span></div>
-    </div>
-    <div class="section-title">Spoofing Modules</div>
-    <div class="modules-grid" id="modules-grid">
-      <div class="module-card" data-module="canvas"><span class="module-name">Canvas</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="webgl"><span class="module-name">WebGL</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="audio"><span class="module-name">Audio</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="navigator"><span class="module-name">Navigator</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="screen"><span class="module-name">Screen</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="fonts"><span class="module-name">Fonts</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="webrtc"><span class="module-name">WebRTC</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="timezone"><span class="module-name">Timezone</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="rects"><span class="module-name">Rects</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="battery"><span class="module-name">Battery</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="media"><span class="module-name">Media</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-      <div class="module-card" data-module="speech"><span class="module-name">Speech</span><label class="mini-toggle"><input type="checkbox" checked><span class="mini-slider"></span></label></div>
-    </div>
-    <button class="advanced-toggle" id="advanced-toggle"><span>Advanced</span><span class="chevron" id="advanced-chevron">▼</span></button>
-    <div class="advanced-section" id="advanced-section">
-      <div class="adv-row"><span class="adv-label">Auto-Rotate</span><label class="mini-toggle"><input type="checkbox" id="auto-rotate-toggle"><span class="mini-slider"></span></label></div>
-      <div class="adv-row"><span class="adv-label">Interval</span><select class="adv-select" id="rotate-interval"><option value="5">5 min</option><option value="15">15 min</option><option value="30" selected>30 min</option><option value="60">60 min</option></select></div>
-      <div class="adv-row"><span class="adv-label">Profile Preset</span><select class="adv-select" id="profile-preset"><option value="Random">Random</option><option value="Windows Desktop">Windows</option><option value="Mac Desktop">macOS</option><option value="Linux Desktop">Linux</option></select></div>
-      <div class="adv-row"><span class="adv-label">Noise Level</span><select class="adv-select" id="noise-level"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
-      
-      <div class="adv-row"><span class="adv-label">Timezone</span><select class="adv-select" id="tz-mode"><option value="auto">Auto (system)</option><option value="ip">Match IP Location</option><option value="profile">From Profile</option><option value="custom">Custom</option></select></div>
-      <div class="adv-row" id="tz-detect-row" style="display:none"><span class="adv-label">IP Timezone</span><button class="adv-btn" id="tz-detect-btn">Auto-Detect</button></div>
-      <div class="adv-row" id="tz-current-row" style="display:none"><span class="adv-label">Active TZ</span><span class="adv-label" id="tz-current-value" style="color:var(--accent)">-</span></div>
-      <div class="adv-row"><span class="adv-label">Whitelist</span><button class="adv-btn" id="whitelist-btn">Manage…</button></div>
-    </div>
-    <div class="action-bar">
-      <button class="action-btn" id="btn-view" title="View Fingerprint">🔍 View</button>
-      <button class="action-btn" id="btn-test" title="Test Fingerprint">🧪 Test</button>
-      <button class="action-btn" id="btn-export" title="Export Profile">📤 Export</button>
-      <button class="action-btn" id="btn-import" title="Import Profile">📥 Import</button>
-    </div>
-  </main>
-  <footer class="footer">
-    <span class="footer-text">PhantomPrint v4.0</span>
-    <button class="footer-btn" id="btn-settings" title="Settings">⚙️ Settings</button>
-  </footer>
-  <div class="modal-overlay" id="whitelist-modal">
-    <div class="modal">
-      <div class="modal-header"><span>Domain Whitelist</span><button class="modal-close" id="whitelist-close">✕</button></div>
-      <div class="modal-body">
-        <div class="wl-input-row"><input type="text" class="wl-input" id="wl-domain-input" placeholder="example.com"><button class="wl-add-btn" id="wl-add-btn">Add</button></div>
-        <div class="wl-list" id="wl-list"></div>
-      </div>
-    </div>
-  </div>
-  <input type="file" id="import-file" accept=".json" style="display:none">
+
   <script src="popup.js"></script>
 </body>
 </html>
