@@ -66,6 +66,10 @@ const CanvasSpoof = (() => {
     //   - Use a WeakMap keyed on canvas to track if noise was already applied
     // ═══════════════════════════════════════════════════════════════════════
 
+    // BUG FIX: origGetImageData MUST be declared before applyDeterministicNoise
+    // which uses it. Previously it was declared after the function, causing ReferenceError.
+    const origGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+
     const noisedCanvases = new WeakSet();
     const canvasNoiseMap = new WeakMap(); // canvas -> noise seed offset
 
@@ -141,8 +145,7 @@ const CanvasSpoof = (() => {
       return origToBlob.apply(this, arguments);
     }, 'toBlob');
 
-    // --- getImageData ---
-    const origGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+    // --- getImageData --- (origGetImageData already declared above, do NOT redeclare)
     CanvasRenderingContext2D.prototype.getImageData = makeNative(function getImageData(sx, sy, sw, sh, settings) {
       const imageData = origGetImageData.apply(this, arguments);
 

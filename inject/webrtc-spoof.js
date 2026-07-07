@@ -85,10 +85,9 @@ const WebRTCSpoof = (() => {
       let userCallback = null;
       Object.defineProperty(pc, 'onicecandidate', {
         get: function() { return userCallback; },
+        // BUG FIX: __lookupSetter__ is deprecated and throws in strict mode. Removed.
         set: function(cb) {
           userCallback = cb;
-          OrigRTCPeerConnection.prototype.__lookupSetter__('onicecandidate') ?
-            (function(){})() : null;
         },
         configurable: true, enumerable: true
       });

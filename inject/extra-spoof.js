@@ -463,4 +463,11 @@
     } catch(e) {}
   }
 
+  // ═══ CLEANUP: Remove config element now that all scripts have read it ═══
+  // inject.js no longer removes it so that this script (the last one injected) can read it.
+  try {
+    const cfgElToRemove = document.getElementById('__phantomprint_cfg__');
+    if (cfgElToRemove) cfgElToRemove.remove();
+  } catch(e) {}
+
 })();

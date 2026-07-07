@@ -85,7 +85,8 @@ const NavigatorSpoof = (() => {
         Object.keys(connProps).forEach(key => {
           Object.defineProperty(fakeConn, key, { value: connProps[key], writable: false, enumerable: true, configurable: false });
         });
-        Object.setPrototypeOf(fakeConn, NetworkInformation ? NetworkInformation.prototype : Object.prototype);
+        // BUG FIX: NetworkInformation may not exist — guard with typeof check
+        Object.setPrototypeOf(fakeConn, typeof NetworkInformation !== 'undefined' ? NetworkInformation.prototype : Object.prototype);
         defineProperty(navProto, 'connection', fakeConn);
       }
     }

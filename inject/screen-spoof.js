@@ -12,12 +12,14 @@ const ScreenSpoof = (() => {
       return fn;
     }
 
+    // BUG FIX: configurable:false prevents re-override by extra-spoof.js and other modules.
+    // Use configurable:true so properties can be redefined if needed.
     function defineGetter(obj, prop, value) {
       Object.defineProperty(obj, prop, {
         get: makeNative(function() { return value; }, `get ${prop}`),
         set: undefined,
         enumerable: true,
-        configurable: false
+        configurable: true
       });
     }
 

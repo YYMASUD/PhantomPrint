@@ -9,7 +9,8 @@ const TimingSpoof = (() => {
   function apply(profile, config, prng) {
     if (!config.enabled) return;
     rng = prng;
-    timeOffset = prng.nextFloat(-5, 5); // Small random offset for timeOrigin
+    // BUG FIX: prng has no nextFloat() method. Use next() arithmetic instead.
+    timeOffset = (prng.next() - 0.5) * 10; // Small random offset ±5ms for timeOrigin
 
     function makeNative(fn, name) {
       const s = `function ${name || fn.name || ''}() { [native code] }`;
@@ -84,7 +85,8 @@ const TimingSpoof = (() => {
 
   function addNoiseToTimingEntry(entry) {
     // Create a proxy that adds small noise to all timing values
-    const noise = rng.nextFloat(-2, 2);
+    // BUG FIX: rng has no nextFloat(). Use next() arithmetic.
+    const noise = (rng.next() - 0.5) * 4; // ±2ms noise
     const handler = {
       get(target, prop) {
         const value = target[prop];

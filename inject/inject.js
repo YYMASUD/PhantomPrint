@@ -8,7 +8,9 @@
   const cfgEl = document.getElementById("__phantomprint_cfg__");
   if (!cfgEl) return;
   let CFG;
-  try { CFG = JSON.parse(cfgEl.textContent); cfgEl.remove(); } catch(e) { return; }
+  // NOTE: Do NOT remove cfgEl here — extra-spoof.js (injected after this) also reads it.
+  // extra-spoof.js is responsible for removing it at the end.
+  try { CFG = JSON.parse(cfgEl.textContent); } catch(e) { return; }
   if (!CFG || !CFG.enabled) return;
 
   const P = CFG.profile;

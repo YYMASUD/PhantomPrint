@@ -29,8 +29,9 @@ const StorageSpoof = (() => {
         get: makeNative(function() {
           return {
             jsHeapSizeLimit: 4294705152,
-            totalJSHeapSize: Math.floor(prng.nextFloat(10000000, 50000000)),
-            usedJSHeapSize: Math.floor(prng.nextFloat(5000000, 30000000))
+            // BUG FIX: prng has no nextFloat(). Use next() arithmetic.
+            totalJSHeapSize: Math.floor(10000000 + prng.next() * 40000000),
+            usedJSHeapSize: Math.floor(5000000 + prng.next() * 25000000)
           };
         }, 'get memory'),
         configurable: false, enumerable: true

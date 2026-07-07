@@ -29,10 +29,25 @@ const BehaviorSpoof = (() => {
 
   function addMouseNoise(makeNative) {
     const origAddEventListener = EventTarget.prototype.addEventListener;
+    const origRemoveEventListener = EventTarget.prototype.removeEventListener;
     const mouseEvents = ['mousemove', 'mousedown', 'mouseup', 'click', 'dblclick', 'contextmenu'];
+
+    // BUG FIX: Store wrapped→original listener mapping per target so removeEventListener
+    // can correctly unregister the wrapped version when the original is passed.
+    // Previously, wrapped listeners were anonymous closures with no way to remove them.
+    const listenerMap = new WeakMap(); // target → Map(original → wrapped)
 
     EventTarget.prototype.addEventListener = makeNative(function addEventListener(type, listener, options) {
       if (mouseEvents.includes(type) && typeof listener === 'function') {
+        // Get or create the per-target listener map
+        if (!listenerMap.has(this)) listenerMap.set(this, new Map());
+        const targetMap = listenerMap.get(this);
+
+        // Reuse existing wrapper if already registered (idempotent)
+        if (targetMap.has(listener)) {
+          return origAddEventListener.call(this, type, targetMap.get(listener), options);
+        }
+
         const wrappedListener = function(event) {
           // Add micro-jitter to coordinates
           const noiseX = Math.floor((rng.next() - 0.5) * 4); // ±2px
@@ -50,18 +65,34 @@ const BehaviorSpoof = (() => {
                 case 'pageX': return target.pageX + noiseX;
                 case 'pageY': return target.pageY + noiseY;
                 case 'timeStamp': return target.timeStamp + (rng.next() - 0.5) * 2;
-                default:
+                default: {
                   const val = target[prop];
                   return typeof val === 'function' ? val.bind(target) : val;
+                }
               }
             }
           });
           listener.call(this, fakeEvent);
         };
+
+        targetMap.set(listener, wrappedListener);
         return origAddEventListener.call(this, type, wrappedListener, options);
       }
       return origAddEventListener.call(this, type, listener, options);
     }, 'addEventListener');
+
+    // BUG FIX: Also wrap removeEventListener to look up the wrapped version
+    EventTarget.prototype.removeEventListener = makeNative(function removeEventListener(type, listener, options) {
+      if (mouseEvents.includes(type) && typeof listener === 'function') {
+        const targetMap = listenerMap.get(this);
+        if (targetMap && targetMap.has(listener)) {
+          const wrappedListener = targetMap.get(listener);
+          targetMap.delete(listener);
+          return origRemoveEventListener.call(this, type, wrappedListener, options);
+        }
+      }
+      return origRemoveEventListener.call(this, type, listener, options);
+    }, 'removeEventListener');
   }
 
   function addKeyboardNoise(makeNative) {

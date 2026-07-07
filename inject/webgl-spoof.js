@@ -52,23 +52,19 @@ const WebGLSpoof = (() => {
       33902: new Float32Array(params.aliasedPointSizeRange)    // ALIASED_POINT_SIZE_RANGE
     };
 
-    // Override getParameter for WebGLRenderingContext
+    // BUG FIX: Merge all getParameter overrides into ONE per context type.
+    // Previously getParameter was overridden twice for WebGL1, causing the second
+    // override to call origGetParam (the first override) which called itself → recursion.
+
+    // Override getParameter for WebGLRenderingContext (single, final override)
     const origGetParam = WebGLRenderingContext.prototype.getParameter;
     WebGLRenderingContext.prototype.getParameter = makeNative(function getParameter(pname) {
+      if (pname === 0x9245) return gpuVendor;      // UNMASKED_VENDOR_WEBGL
+      if (pname === 0x9246) return gpuRenderer;     // UNMASKED_RENDERER_WEBGL
       if (paramOverrides[pname] !== undefined) return paramOverrides[pname];
       if (floatParamOverrides[pname] !== undefined) return floatParamOverrides[pname];
       return origGetParam.call(this, pname);
     }, 'getParameter');
-
-    // Override for WebGL2 if available
-    if (typeof WebGL2RenderingContext !== 'undefined') {
-      const origGetParam2 = WebGL2RenderingContext.prototype.getParameter;
-      WebGL2RenderingContext.prototype.getParameter = makeNative(function getParameter(pname) {
-        if (paramOverrides[pname] !== undefined) return paramOverrides[pname];
-        if (floatParamOverrides[pname] !== undefined) return floatParamOverrides[pname];
-        return origGetParam2.call(this, pname);
-      }, 'getParameter');
-    }
 
     // Override getExtension to intercept WEBGL_debug_renderer_info
     const origGetExtension = WebGLRenderingContext.prototype.getExtension;
@@ -82,7 +78,17 @@ const WebGLSpoof = (() => {
       return origGetExtension.call(this, name);
     }, 'getExtension');
 
+    // Override for WebGL2 if available (single, final override)
     if (typeof WebGL2RenderingContext !== 'undefined') {
+      const origGetParam2 = WebGL2RenderingContext.prototype.getParameter;
+      WebGL2RenderingContext.prototype.getParameter = makeNative(function getParameter(pname) {
+        if (pname === 0x9245) return gpuVendor;
+        if (pname === 0x9246) return gpuRenderer;
+        if (paramOverrides[pname] !== undefined) return paramOverrides[pname];
+        if (floatParamOverrides[pname] !== undefined) return floatParamOverrides[pname];
+        return origGetParam2.call(this, pname);
+      }, 'getParameter');
+
       const origGetExtension2 = WebGL2RenderingContext.prototype.getExtension;
       WebGL2RenderingContext.prototype.getExtension = makeNative(function getExtension(name) {
         if (name === 'WEBGL_debug_renderer_info') {
@@ -93,27 +99,6 @@ const WebGLSpoof = (() => {
         }
         return origGetExtension2.call(this, name);
       }, 'getExtension');
-    }
-
-    // Hook getParameter for unmasked vendor/renderer (0x9245, 0x9246)
-    const origGetParamPatched = WebGLRenderingContext.prototype.getParameter;
-    WebGLRenderingContext.prototype.getParameter = makeNative(function getParameter(pname) {
-      if (pname === 0x9245) return gpuVendor;     // UNMASKED_VENDOR_WEBGL
-      if (pname === 0x9246) return gpuRenderer;    // UNMASKED_RENDERER_WEBGL
-      if (paramOverrides[pname] !== undefined) return paramOverrides[pname];
-      if (floatParamOverrides[pname] !== undefined) return floatParamOverrides[pname];
-      return origGetParam.call(this, pname);
-    }, 'getParameter');
-
-    if (typeof WebGL2RenderingContext !== 'undefined') {
-      const origGetParam2Base = WebGL2RenderingContext.prototype.getParameter;
-      WebGL2RenderingContext.prototype.getParameter = makeNative(function getParameter(pname) {
-        if (pname === 0x9245) return gpuVendor;
-        if (pname === 0x9246) return gpuRenderer;
-        if (paramOverrides[pname] !== undefined) return paramOverrides[pname];
-        if (floatParamOverrides[pname] !== undefined) return floatParamOverrides[pname];
-        return origGetParam2Base.call(this, pname);
-      }, 'getParameter');
     }
 
     // Override getSupportedExtensions
