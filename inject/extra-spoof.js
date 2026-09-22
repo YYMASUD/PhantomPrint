@@ -1,13 +1,14 @@
 // PhantomPrint — Extra Spoofing Module
 // Covers: Geolocation, matchMedia, Permissions API, Keyboard Layout, Network Info
-// Must run in MAIN world before any page scripts
+// Must run in MAIN world before any page scripts.
+// Reads config from window.__pp_cfg__ (set by content.js as a self-deleting property).
+// Registers native functions against the shared window.__ppNatives WeakMap set by
+// inject.js — this avoids the double-toString-patch problem.
 (function() {
   "use strict";
 
-  const cfgEl = document.getElementById("__phantomprint_cfg__");
-  if (!cfgEl) return;
-  let CFG;
-  try { CFG = JSON.parse(cfgEl.textContent); } catch(e) { return; }
+  // Read config from the shared window property (not a DOM element)
+  const CFG = window.__pp_cfg__;
   if (!CFG || !CFG.enabled) return;
 
   const P = CFG.profile;
@@ -16,8 +17,11 @@
 
   const _defineProperty = Object.defineProperty;
   const _call = Function.prototype.call;
-  const _toString = Function.prototype.toString;
-  const nativeStrings = new WeakMap();
+
+  // Re-use the single shared WeakMap from inject.js so we don't need a second
+  // Function.prototype.toString patch (which would wrap the already-patched one).
+  const nativeStrings = (window.__ppNatives instanceof WeakMap)
+    ? window.__ppNatives : new WeakMap();
 
   function regNative(fn, name) {
     const n = name || fn.name || "";
@@ -25,19 +29,6 @@
     try { _defineProperty(fn, "name", { value: n, configurable: true }); } catch(e) {}
     return fn;
   }
-
-  // Patch toString to cover our new natives
-  const existingToString = Function.prototype.toString;
-  const patchedToString = function toString() {
-    if (nativeStrings.has(this)) return nativeStrings.get(this);
-    return _call.call(existingToString, this);
-  };
-  nativeStrings.set(patchedToString, "function toString() { [native code] }");
-  try {
-    _defineProperty(Function.prototype, "toString", {
-      value: patchedToString, writable: true, configurable: true, enumerable: false
-    });
-  } catch(e) {}
 
   // ═══ 1. GEOLOCATION SPOOFING ═══
   if (MOD.geolocation !== false && P) {
@@ -463,11 +454,10 @@
     } catch(e) {}
   }
 
-  // ═══ CLEANUP: Remove config element now that all scripts have read it ═══
-  // inject.js no longer removes it so that this script (the last one injected) can read it.
-  try {
-    const cfgElToRemove = document.getElementById('__phantomprint_cfg__');
-    if (cfgElToRemove) cfgElToRemove.remove();
-  } catch(e) {}
+  // ═══ CLEANUP: Delete the shared config and natives references ═══
+  // Now that all inject scripts have run and registered their functions,
+  // remove the window-level references so page scripts cannot read them.
+  try { delete window.__pp_cfg__; }   catch(e) {}
+  try { delete window.__ppNatives; }  catch(e) {}
 
 })();

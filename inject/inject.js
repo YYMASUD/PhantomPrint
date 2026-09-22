@@ -5,12 +5,11 @@
   "use strict";
 
   // ═══ BOOTSTRAP
-  const cfgEl = document.getElementById("__phantomprint_cfg__");
-  if (!cfgEl) return;
-  let CFG;
-  // NOTE: Do NOT remove cfgEl here — extra-spoof.js (injected after this) also reads it.
-  // extra-spoof.js is responsible for removing it at the end.
-  try { CFG = JSON.parse(cfgEl.textContent); } catch(e) { return; }
+  // Config is delivered via window.__pp_cfg__ (a non-enumerable, configurable
+  // window property written by an inline script in content.js). This avoids the
+  // detectable <script id="__phantomprint_cfg__"> DOM element that fingerprinters
+  // could find with getElementById() during the injection window.
+  const CFG = window.__pp_cfg__;
   if (!CFG || !CFG.enabled) return;
 
   const P = CFG.profile;
@@ -62,9 +61,18 @@
   const _getProto = Object.getPrototypeOf;
 
   // WeakMap: spoofed function → native toString string
+  // Exposed as window.__ppNatives so subsequent inject modules (uadata-spoof,
+  // extra-spoof, etc.) can register their own functions against the SAME map,
+  // avoiding the double-patch problem where two separate WeakMaps exist and
+  // the second toString wrapper can't see the first map's entries.
   const nativeStrings = new WeakMap();
+  try {
+    _defineProperty(window, "__ppNatives", {
+      value: nativeStrings, writable: false, configurable: true, enumerable: false
+    });
+  } catch(e) {}
 
-  // Patch Function.prototype.toString FIRST
+  // Patch Function.prototype.toString FIRST — single authoritative patch
   const patchedToString = function toString() {
     if (nativeStrings.has(this)) return nativeStrings.get(this);
     return _call.call(_toString, this);
@@ -216,9 +224,18 @@
       } catch(e) {}
 
 
-      // navigator.webdriver — MUST be false (Pixelscan checks this)
+      // navigator.webdriver — must be undefined in a real browser.
+      // Returning `false` is itself detectable (Pixelscan, CreepJS check for this
+      // as it means the property exists but was explicitly set false — a bot signal).
+      // A normal Chrome browser has no webdriver property at all, so we install an
+      // accessor that returns undefined, matching a clean browser environment.
       try {
-        defGetter(Navigator.prototype, "webdriver", function() { return false; });
+        _defineProperty(Navigator.prototype, "webdriver", {
+          get: regNative(function() { return undefined; }, "get webdriver"),
+          set: undefined,
+          enumerable: true,
+          configurable: true
+        });
       } catch(e) {}
 
     } catch(e) {}
@@ -232,6 +249,9 @@
       defGetter(Screen.prototype, "height", function() { return scr.height; });
       defGetter(Screen.prototype, "availWidth", function() { return scr.availWidth; });
       defGetter(Screen.prototype, "availHeight", function() { return scr.availHeight; });
+      // availLeft / availTop reveal multi-monitor setups; always 0 on a single display
+      defGetter(Screen.prototype, "availLeft", function() { return 0; });
+      defGetter(Screen.prototype, "availTop",  function() { return 0; });
       if (P.colorDepth !== undefined) {
         defGetter(Screen.prototype, "colorDepth", function() { return P.colorDepth; });
         defGetter(Screen.prototype, "pixelDepth", function() { return P.pixelDepth || P.colorDepth; });
@@ -679,6 +699,37 @@
         };
       });
 
+      // ── Spoof remaining Intl.* constructors so they don't leak the real locale ──
+      // Fingerprinters call Intl.Collator().resolvedOptions().locale etc. to detect
+      // the real system locale even when navigator.language is spoofed.
+      try {
+        var targetLocale = P.language || (P.languages && P.languages[0]) || "en-US";
+
+        function wrapIntlConstructor(ctor, ctorName) {
+          if (!Intl[ctorName]) return;
+          var OrigCtor = Intl[ctorName];
+          var FakeCtor = regNative(function() {
+            var args = Array.prototype.slice.call(arguments);
+            // If no locale argument passed, inject the spoofed one
+            if (!args[0]) args[0] = targetLocale;
+            if (new.target) {
+              var inst = Object.create(OrigCtor.prototype);
+              OrigCtor.apply(inst, args);
+              return inst;
+            }
+            return OrigCtor.apply(null, args);
+          }, ctorName);
+          try { FakeCtor.prototype = OrigCtor.prototype; } catch(e) {}
+          if (OrigCtor.supportedLocalesOf)
+            FakeCtor.supportedLocalesOf = OrigCtor.supportedLocalesOf;
+          Intl[ctorName] = FakeCtor;
+        }
+        ["Collator", "NumberFormat", "PluralRules", "RelativeTimeFormat",
+         "ListFormat", "Segmenter"].forEach(function(n) {
+          try { wrapIntlConstructor(Intl, n); } catch(e) {}
+        });
+      } catch(e) {}
+
     } catch(e) {}
   }
 
@@ -758,21 +809,10 @@
   }
 
   // ═══ MODULE 13: PERFORMANCE TIMING
-  if (modOn("timing")) {
-    try {
-      var lastFake = 0;
-      wrapMethod(Performance.prototype, "now", function(orig) {
-        return function now() {
-          var real = _call.call(orig, this);
-          var jitter = RNG.noise(0.05);
-          var faked = real + jitter;
-          if (faked <= lastFake) faked = lastFake + 0.001;
-          lastFake = faked;
-          return faked;
-        };
-      });
-    } catch(e) {}
-  }
+  // NOTE: performance.now() is fully handled by timing-spoof.js which runs after
+  // this script. Do NOT add a second override here — two independent overrides
+  // create separate monotonic counters, allowing non-monotonic timestamps which
+  // CreepJS detects. timing-spoof.js owns the single authoritative override.
 
   // ═══ MODULE 14: STORAGE ESTIMATE
   if (modOn("storage")) {
@@ -796,13 +836,59 @@
   }
 
   
-  // ═══ STEALTH: Ensure window.chrome exists (Pixelscan checks)
+  // ═══ STEALTH: Complete window.chrome object (Pixelscan / CreepJS checks)
+  // Real Chrome exposes chrome.loadTimes(), chrome.csi(), chrome.app, chrome.runtime.
+  // A missing or incomplete object is an immediate fingerprint of extension tampering.
   try {
-    if (!window.chrome) {
-      window.chrome = { runtime: {} };
-    }
+    if (!window.chrome) window.chrome = {};
+
     if (!window.chrome.runtime) {
       window.chrome.runtime = {};
+    }
+
+    // chrome.loadTimes() — present in real Chrome (deprecated but still exists)
+    if (!window.chrome.loadTimes) {
+      var _ltBase = performance.timing ? performance.timing.navigationStart : Date.now();
+      window.chrome.loadTimes = regNative(function loadTimes() {
+        return {
+          requestTime:        _ltBase / 1000,
+          startLoadTime:      _ltBase / 1000,
+          commitLoadTime:     (_ltBase + 15) / 1000,
+          finishDocumentLoadTime: (_ltBase + 80) / 1000,
+          finishLoadTime:     (_ltBase + 120) / 1000,
+          firstPaintTime:     (_ltBase + 40) / 1000,
+          firstPaintAfterLoadTime: 0,
+          navigationType:     "Other",
+          wasFetchedViaSpdy:  false,
+          wasNpnNegotiated:   true,
+          npnNegotiatedProtocol: "h2",
+          wasAlternateProtocolAvailable: false,
+          connectionInfo:     "h2"
+        };
+      }, "loadTimes");
+    }
+
+    // chrome.csi() — present in real Chrome
+    if (!window.chrome.csi) {
+      window.chrome.csi = regNative(function csi() {
+        return {
+          startE:  performance.timing ? performance.timing.navigationStart : Date.now(),
+          onloadT: performance.timing ? performance.timing.loadEventStart : Date.now() + 100,
+          pageT:   performance.now(),
+          tran:    15
+        };
+      }, "csi");
+    }
+
+    // chrome.app — present in real Chrome
+    if (!window.chrome.app) {
+      window.chrome.app = {
+        isInstalled: false,
+        getDetails:    regNative(function getDetails()    { return null; }, "getDetails"),
+        getIsInstalled: regNative(function getIsInstalled() { return false; }, "getIsInstalled"),
+        installState:  regNative(function installState(cb) { if (cb) cb("not_installed"); }, "installState"),
+        runningState:  regNative(function runningState()  { return "cannot_run"; }, "runningState")
+      };
     }
   } catch(e) {}
 

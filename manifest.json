@@ -55,6 +55,7 @@
     {
       "resources": [
         "inject/inject.js",
+        "inject/uadata-spoof.js",
         "inject/profiles.js",
         "inject/prng.js",
         "inject/webgpu-spoof.js",

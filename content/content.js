@@ -111,21 +111,28 @@
       noiseLevel: data.noiseLevel || "medium"
     };
 
-    var configJson = JSON.stringify(config);
-
-    // ── Inject config as hidden element (removed by inject.js after reading) ──
-    var el = document.createElement("script");
-    el.type = "application/json";
-    el.id = "__phantomprint_cfg__";
-    el.textContent = configJson;
-    (document.head || document.documentElement).prepend(el);
+    // ── Inject config as a non-enumerable, self-deleting window property ──────
+    // Using a DOM element (the old approach) is detectable: any page script can
+    // call document.getElementById('__phantomprint_cfg__') during the window
+    // in which the element exists. Using a non-enumerable window property avoids
+    // DOM fingerprinting entirely. The property is deleted by extra-spoof.js
+    // (the last injected module) once all scripts have consumed it.
+    var configScript = document.createElement("script");
+    configScript.textContent =
+      "Object.defineProperty(window,'__pp_cfg__',{value:" + JSON.stringify(config) +
+      ",writable:false,configurable:true,enumerable:false});";
+    (document.head || document.documentElement).prepend(configScript);
+    configScript.remove(); // Remove the script element immediately after injection
 
     // ── Inject all spoofing scripts in correct order ──
-    // Order matters: inject.js first (sets up PRNG + core), then extras
+    // Order matters: inject.js FIRST (sets up PRNG, native masking, __ppNatives),
+    // then uadata-spoof (needs __ppNatives), then webgpu-spoof, then extra-spoof
+    // (owns cleanup of __pp_cfg__ and __ppNatives).
     var scripts = [
       "inject/inject.js",        // Core: navigator, screen, canvas, webgl, audio, fonts, webrtc, rects, timezone, battery, speech, media, timing, storage
+      "inject/uadata-spoof.js",  // navigator.userAgentData (UA Client Hints JS API)
       "inject/webgpu-spoof.js",  // WebGPU API spoofing
-      "inject/extra-spoof.js"    // Geolocation, matchMedia, Permissions, Keyboard, Network
+      "inject/extra-spoof.js"    // Geolocation, matchMedia, Permissions, Keyboard, Network + cleanup
     ];
 
     // Inject sequentially to maintain order

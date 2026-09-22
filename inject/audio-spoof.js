@@ -26,20 +26,31 @@ const AudioSpoof = (() => {
     // Patch AudioContext
     const origAudioContextProto = OrigAudioContext.prototype;
 
+    // sampleRate MUST be intercepted at the prototype level.
+    // It is a read-only property set at AudioContext construction time, but
+    // installing a getter on BaseAudioContext.prototype overrides the instance value
+    // that fingerprinters read. This is the only reliable interception point.
+    const baseProto = typeof BaseAudioContext !== 'undefined'
+      ? BaseAudioContext.prototype : origAudioContextProto;
+    try {
+      Object.defineProperty(baseProto, 'sampleRate', {
+        get: makeNative(function() { return audioParams.sampleRate || 48000; }, 'get sampleRate'),
+        configurable: true, enumerable: true
+      });
+    } catch(e) {}
+
     // Override baseLatency
     Object.defineProperty(origAudioContextProto, 'baseLatency', {
       get: makeNative(function() { return audioParams.baseLatency; }, 'get baseLatency'),
-      configurable: false, enumerable: true
+      configurable: true, enumerable: true
     });
 
     // Override outputLatency
     Object.defineProperty(origAudioContextProto, 'outputLatency', {
       get: makeNative(function() { return audioParams.outputLatency; }, 'get outputLatency'),
-      configurable: false, enumerable: true
+      configurable: true, enumerable: true
     });
 
-    // Override sampleRate on destination
-    // Note: sampleRate is read-only on BaseAudioContext, we need to intercept at creation
     const origCreateOscillator = origAudioContextProto.createOscillator;
     const origCreateAnalyser = origAudioContextProto.createAnalyser;
     const origCreateGain = origAudioContextProto.createGain;

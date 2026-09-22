@@ -31,6 +31,9 @@ const ScreenSpoof = (() => {
     defineGetter(screenProto, 'availHeight', profile.screen.availHeight);
     defineGetter(screenProto, 'colorDepth', profile.screen.colorDepth);
     defineGetter(screenProto, 'pixelDepth', profile.screen.pixelDepth);
+    // availLeft / availTop: non-zero values reveal multi-monitor setups
+    defineGetter(screenProto, 'availLeft', 0);
+    defineGetter(screenProto, 'availTop',  0);
 
     // Screen orientation
     if (screen.orientation) {
@@ -46,15 +49,25 @@ const ScreenSpoof = (() => {
     defineGetter(window, 'outerWidth', profile.outerWidth);
     defineGetter(window, 'outerHeight', profile.outerHeight);
 
-    // Override matchMedia to return consistent spoofed results
+    // Override matchMedia — use a real MediaQueryList wrapped in a Proxy.
+    // The previous approach returned a stub object whose addEventListener was a no-op,
+    // which fingerprinters detect by attaching listeners and firing resize events.
+    // The Proxy approach keeps the real MQL's event system fully functional while
+    // only intercepting the `.matches` property read.
     const origMatchMedia = window.matchMedia;
     window.matchMedia = makeNative(function matchMedia(query) {
+      const realMQL = origMatchMedia.call(window, query);
       const spoofedResult = getSpoofedMediaQuery(query, profile);
-      if (spoofedResult !== null) {
-        return createMediaQueryList(query, spoofedResult);
-      }
-      // For non-spoofed queries, use original
-      return origMatchMedia.call(window, query);
+      if (spoofedResult === null) return realMQL;
+      // Return a Proxy over the real MQL — all event APIs work normally
+      return new Proxy(realMQL, {
+        get: function(target, prop, receiver) {
+          if (prop === 'matches') return spoofedResult;
+          if (prop === 'media')   return query;
+          const val = Reflect.get(target, prop, target);
+          return typeof val === 'function' ? val.bind(target) : val;
+        }
+      });
     }, 'matchMedia');
 
     // Override CSS.supports for consistency

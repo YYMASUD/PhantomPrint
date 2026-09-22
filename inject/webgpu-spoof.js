@@ -4,10 +4,7 @@
 (function() {
   "use strict";
 
-  const cfgEl = document.getElementById("__phantomprint_cfg__");
-  if (!cfgEl) return;
-  let CFG;
-  try { CFG = JSON.parse(cfgEl.textContent); } catch(e) { return; }
+  const CFG = window.__pp_cfg__;
   if (!CFG || !CFG.enabled) return;
 
   const P = CFG.profile;

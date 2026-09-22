@@ -18,14 +18,23 @@ const TimingSpoof = (() => {
       return fn;
     }
 
-    // Override performance.now() - reduce precision to 100μs and add noise
-    const origPerformanceNow = performance.now.bind(performance);
-    performance.now = makeNative(function now() {
-      const t = origPerformanceNow();
-      // Round to 100 microsecond precision and add tiny noise
-      const rounded = Math.round(t * 10) / 10;
+    // Override Performance.prototype.now — single authoritative override.
+    // Must be on the PROTOTYPE (not the instance) so all Performance objects
+    // share the same monotonic counter. Using an instance override alongside a
+    // prototype override creates two separate counters which can go non-monotonic,
+    // a specific signal that CreepJS and PixelScan test for.
+    let lastNow = 0;
+    const origPerfNow = Performance.prototype.now;
+    Performance.prototype.now = makeNative(function now() {
+      const real = origPerfNow.call(this);
+      // Round to 100 microsecond precision + tiny noise (same as Firefox RFP)
+      const rounded = Math.round(real * 10) / 10;
       const noise = (rng.next() - 0.5) * 0.1;
-      return rounded + noise;
+      let result = rounded + noise;
+      // Ensure monotonically increasing — never go backward
+      if (result <= lastNow) result = lastNow + 0.001;
+      lastNow = result;
+      return result;
     }, 'now');
 
     // Override performance.timeOrigin
