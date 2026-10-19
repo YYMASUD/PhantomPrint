@@ -513,6 +513,29 @@
           writable: true, configurable: true
         });
       }
+
+      // ── SVG text measurement spoofing ──
+      // iphey.com fingerprints via SVGTextContentElement.getComputedTextLength()
+      // which reveals real OS font rendering metrics. Add seeded per-session noise.
+      try {
+        var svgNoise = (RNG.derive("svg:font:noise") - 0.5) * 0.8 * NM;
+        if (typeof SVGTextContentElement !== "undefined") {
+          if (SVGTextContentElement.prototype.getComputedTextLength) {
+            var _origGCTL = SVGTextContentElement.prototype.getComputedTextLength;
+            SVGTextContentElement.prototype.getComputedTextLength = regNative(function getComputedTextLength() {
+              var real = _call.call(_origGCTL, this);
+              return real + svgNoise;
+            }, "getComputedTextLength");
+          }
+          if (SVGTextContentElement.prototype.getSubStringLength) {
+            var _origGSL = SVGTextContentElement.prototype.getSubStringLength;
+            SVGTextContentElement.prototype.getSubStringLength = regNative(function getSubStringLength(charnum, nchars) {
+              var real = _call.call(_origGSL, this, charnum, nchars);
+              return real + svgNoise * 0.5;
+            }, "getSubStringLength");
+          }
+        }
+      } catch(e) {}
     } catch(e) {}
   }
 
@@ -635,8 +658,12 @@
       var tz = P.timezone;
 
       // getTimezoneOffset
+      // Browser convention: UTC-5 (New York) → returns +300; UTC+8 (Shanghai) → returns -480.
+      // Stored profile offset uses the same sign as IANA offset (e.g. NY = -300, Shanghai = +480).
+      // So we must negate the stored value to match the browser API.
+      var tzOffsetForBrowser = -(tz.offset);
       wrapMethod(Date.prototype, "getTimezoneOffset", function(orig) {
-        return function getTimezoneOffset() { return tz.offset; };
+        return function getTimezoneOffset() { return tzOffsetForBrowser; };
       });
 
       // Save original Intl.DateTimeFormat before overriding
@@ -670,7 +697,8 @@
             var d = this;
             var datePart = new OrigDTF("en-US", { timeZone: tz.zone, weekday:"short", year:"numeric", month:"short", day:"2-digit" }).format(d);
             var timePart = new OrigDTF("en-US", { timeZone: tz.zone, hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false }).format(d);
-            var sign = tz.offset <= 0 ? "+" : "-";
+            // stored offset: negative = west of UTC (e.g. NY=-300 → GMT-0500), positive = east
+            var sign = tz.offset >= 0 ? "+" : "-";
             var absOff = Math.abs(tz.offset);
             var hh = String(Math.floor(absOff / 60)).padStart(2, "0");
             var mm = String(absOff % 60).padStart(2, "0");
@@ -688,7 +716,7 @@
           try {
             var d = this;
             var timePart = new OrigDTF("en-US", { timeZone: tz.zone, hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false }).format(d);
-            var sign = tz.offset <= 0 ? "+" : "-";
+            var sign = tz.offset >= 0 ? "+" : "-";
             var absOff = Math.abs(tz.offset);
             var hh = String(Math.floor(absOff / 60)).padStart(2, "0");
             var mm = String(absOff % 60).padStart(2, "0");

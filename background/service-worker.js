@@ -433,7 +433,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       fingerprintProfile: profile,
       seed,
       lastRandomized: Date.now(),
-      timezoneMode: 'auto'
+      timezoneMode: 'profile'
     });
     try { await autoSyncIPTimezone(); } catch(e) {}
     // Show onboarding
@@ -446,7 +446,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       merged.seed = Date.now();
       merged.lastRandomized = Date.now();
     }
-    if (!merged.timezoneMode) merged.timezoneMode = 'auto';
+    if (!merged.timezoneMode || merged.timezoneMode === 'auto') merged.timezoneMode = 'profile';
     // Migrate old modules format — add new module keys
     if (merged.modules) {
       if (merged.modules.webgpu === undefined) merged.modules.webgpu = true;

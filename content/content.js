@@ -84,9 +84,9 @@
     var tzMode = data.timezoneMode || "auto";
 
     if (tzMode === "auto") {
-      // Auto = use system timezone, DON'T spoof at all
-      profile.timezone = null;
-      modules.timezone = false;
+      // Auto = use profile timezone (avoids leaking real system timezone like Asia/Shanghai)
+      // Keep profile.timezone as-is so the inject module spoofs it correctly.
+      // modules.timezone stays true (already set in DEFAULT_STATE).
     } else if (tzMode === "ip" && ipLoc && ipLoc.timezone) {
       profile.timezone = ipLoc.timezone;
       if (ipLoc.languages) {
@@ -98,9 +98,7 @@
     } else if (tzMode === "profile") {
       // Keep profile timezone as-is
     } else {
-      // Fallback: don't spoof
-      profile.timezone = null;
-      modules.timezone = false;
+      // Fallback: keep profile timezone (don't disable spoofing)
     }
 
     var config = {
